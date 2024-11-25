@@ -27,7 +27,7 @@ public class Projectile : MonoBehaviour
         {
             return;
         }
-        if (gameObject.CompareTag("Attack"))
+        if (gameObject.CompareTag("Shot"))
         {
             if (collision.gameObject.CompareTag("Player"))
             {

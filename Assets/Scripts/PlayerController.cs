@@ -95,11 +95,31 @@ public class PlayerController : MonoBehaviour
     private UIManager uiManager;
 
     [SerializeField] private int maxUsesSecondaryATK;
-    [SerializeField] private int currentUsesSecondaryATK;
+    private int currentUsesSecondaryATK;
 
+    private enum uniqueSkill
+    {
+        bluePlanet,
+        turqoiseSplash
+    }
+
+    [SerializeField] private uniqueSkill currentUS;
+
+
+
+    [SerializeField] private float timeSlowed = 0.2f;
+    [SerializeField] private float distanceOfSpecialDash;
+    [SerializeField] private GameObject specialDashGO;
+    private bool hasUsedSpecialDash = false;
+
+    private RaycastHit2D[] dashHits;
+    private bool specialDashing;
 
     private void Start()
     {
+        specialDashGO.transform.localScale = new Vector2 (distanceOfSpecialDash, distanceOfSpecialDash);
+        specialDashGO.SetActive(false);
+        currentUsesSecondaryATK = maxUsesSecondaryATK;
         rigid = GetComponent<Rigidbody2D>();
         coll = GetComponent<CapsuleCollider2D>();
         gameManager = FindObjectOfType<GameManager>();
@@ -125,10 +145,31 @@ public class PlayerController : MonoBehaviour
         {
             return;
         }
-
-        if(Input.GetKeyDown(KeyCode.S) && touchingGround)
+        if (specialDashing)
         {
-            if(ladderTop)
+            if (Input.GetKeyUp(KeyCode.LeftShift) && !hasUsedSpecialDash)
+            {
+                ExitDashMode();
+            }
+            return;
+        }
+        InputsUpdate();
+
+
+
+        if (!attacking)
+        {
+            CheckGravity();
+        }
+        
+        
+    }
+
+    private void InputsUpdate()
+    {
+        if (Input.GetKeyDown(KeyCode.S) && touchingGround)
+        {
+            if (ladderTop)
             {
                 StartCoroutine(GoDownLadder());
                 return;
@@ -139,7 +180,7 @@ public class PlayerController : MonoBehaviour
             {
                 floor.GoThrough();
             }
-            
+
         }
 
         if (Input.GetKeyDown(KeyCode.W))
@@ -166,7 +207,7 @@ public class PlayerController : MonoBehaviour
         {
             GEDDAN();
         }
-        else if(Input.GetKeyUp(KeyCode.LeftControl) && touchingGround)
+        else if (Input.GetKeyUp(KeyCode.LeftControl) && touchingGround)
         {
             if (crouching)
             {
@@ -174,9 +215,12 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        
+        if (Input.GetKeyDown(KeyCode.LeftShift) && !hasUsedSpecialDash)
+        {
+            EnterDashMode();
+        }
 
-        if(Input.GetMouseButtonDown(0) && canAttack)
+        if (Input.GetMouseButtonDown(0) && canAttack)
         {
             StartCoroutine(Attack1());
         }
@@ -185,18 +229,61 @@ public class PlayerController : MonoBehaviour
         {
             Attack2(currentSA);
         }
-
-        if(!attacking)
-        {
-            CheckGravity();
-        }
-        
-        
     }
+
+    private void EnterDashMode()
+    {
+        Time.timeScale = 0.2f;
+        specialDashGO.SetActive(true);
+        specialDashing = true;
+    }
+
+    private void ExitDashMode()
+    {
+        specialDashing = false;
+        //hasUsedSpecialDash = true;
+        Time.timeScale = 1f;
+        specialDashGO.SetActive(false);
+        //rayo hacia el ratón
+        Vector2 dir = Direction();
+        dashHits = Physics2D.RaycastAll(transform.position, dir, distanceOfSpecialDash);
+        //matar enemigos que toquen el rayo
+        Vector2 finalPos = new Vector3(-1000, -1000, -1000);
+
+        foreach(RaycastHit2D rayh in dashHits)
+        {
+            if (rayh.collider.gameObject.CompareTag("Enemy"))
+            {
+                rayh.collider.gameObject.GetComponent<AnimalEnemy>().Kill();
+            }
+            else if (rayh.collider.gameObject.CompareTag("Wall"))
+            {
+                finalPos = rayh.point;
+                if (dir.y > 0)
+                {
+                    finalPos.y -= height;
+                }
+                else
+                {
+                    finalPos.y += height;
+                }
+                break;
+            }
+        }
+
+        if (finalPos == new Vector2(-1000, -1000)) finalPos = transform.position + (new Vector3(dir.x,dir.y,0) * distanceOfSpecialDash);
+
+        //mover el pj hasta el final del rayo o hasta la pared con la que choque
+
+        transform.Translate(finalPos);
+
+    }
+
 
     private void Attack2(secondaryATKs sA)
     {
         IEnumerator aux = null;
+        currentUsesSecondaryATK--;
         if(sA == secondaryATKs.icicleShot)
         {
             aux = IcicleShot();
@@ -491,16 +578,14 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator Attack1()
     {
-        Vector2 cPos = gameManager.CrossPos();
+        
         float aux = acc;
         canAttack = false;
         attacking = true;
         float grav = rigid.gravityScale;
         rigid.gravityScale = 0;
-        Vector2 pos = new Vector2 (transform.position.x, transform.position.y);
-        Vector2 dir = cPos - pos;
-        dir.Normalize();
-        attackHitObject.transform.right = cPos - pos;
+        Vector2 dir = Direction();
+        attackHitObject.transform.right =dir;
         attackColl.enabled = true;
         attackObject.SetActive(true);
         rigid.velocity = new Vector2(rigid.velocity.x/2,rigid.velocity.y/2);  
@@ -523,8 +608,7 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator IcicleShot()
     {
-        Vector2 dir = -(Vector2)transform.position+gameManager.CrossPos();
-        dir.Normalize();
+        Vector2 dir = Direction();
         Vector3 aux = new Vector3 (0,0,0);
         aux =  dir;
         canUseScndry = false;
@@ -549,8 +633,7 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator Fireball()
     {
-        Vector2 dir = -(Vector2)transform.position + gameManager.CrossPos();
-        dir.Normalize();
+        Vector2 dir = Direction();
         Vector3 aux = new Vector3(0, 0, 0);
         aux = dir;
         canUseScndry = false;
@@ -613,13 +696,11 @@ public class PlayerController : MonoBehaviour
                 Die();
             }
         }
-        else if (collision.gameObject.CompareTag("Shot"))
+        else if (collision.gameObject.CompareTag("EnemyShot") && attacking)
         {
-        Vector2 cPos = gameManager.CrossPos();
-    Vector2 pos = new Vector2(transform.position.x, transform.position.y);
-    Vector2 dir = cPos - pos;
-    collision.gameObject.GetComponentInParent<Projectile>().Return(dir);
-}
+            Vector2 dir = Direction();
+            collision.gameObject.GetComponentInParent<Projectile>().Return(dir);
+        }
     }
 
     private void OnTriggerStay2D(Collider2D collision)
@@ -673,5 +754,11 @@ public class PlayerController : MonoBehaviour
         return currentLadder;
     }
 
+    private Vector2 Direction()
+    {
+        Vector2 cPos = gameManager.CrossPos();
+        Vector2 pos = new Vector2(transform.position.x, transform.position.y);
+        return (cPos - pos).normalized;
+    }
 
 }

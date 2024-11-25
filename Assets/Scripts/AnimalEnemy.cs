@@ -406,4 +406,9 @@ public class AnimalEnemy : MonoBehaviour
         rigid.AddForce(aux * 600);
     }
 
+    public void Kill()
+    {
+        Die();
+    }
+
 }
