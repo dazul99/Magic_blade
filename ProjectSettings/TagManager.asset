@@ -3,7 +3,16 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Attack
+  - Wall
+  - ThroughFloor
+  - Ladder
+  - Enemy
+  - Explosion
+  - Shot
+  - Room
+  - EnemyAttack
   layers:
   - Default
   - TransparentFX
@@ -12,9 +21,9 @@ TagManager:
   - Water
   - UI
   - Ground
-  - 
-  - 
-  - 
+  - Player
+  - Room
+  - Attack
   - 
   - 
   - 
