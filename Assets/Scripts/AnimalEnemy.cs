@@ -380,6 +380,7 @@ public class AnimalEnemy : MonoBehaviour
         rigid.velocity = Vector2.zero;
         rigid.inertia = 0f;
         dead = true;
+        gameObject.layer = 0;
         Debug.Log("AAAAAAGH");
     }
 

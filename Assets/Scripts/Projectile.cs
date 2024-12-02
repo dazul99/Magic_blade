@@ -10,6 +10,9 @@ public class Projectile : MonoBehaviour
 
     [SerializeField] private GameObject explosion;
 
+    [SerializeField] private float explosionTime = 0.75f;
+
+
 
     private void Start()
     {
@@ -55,7 +58,7 @@ public class Projectile : MonoBehaviour
     {
         rb.velocity = Vector3.zero;
         explosion.SetActive(true);
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(explosionTime);
         Destroy(explosion);
         Destroy(gameObject);
     }

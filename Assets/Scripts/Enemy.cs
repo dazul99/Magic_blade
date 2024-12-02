@@ -518,6 +518,7 @@ public class Enemy : MonoBehaviour
     {
         rigid.velocity = Vector2.zero;
         dead = true;
+        
         Debug.Log("AAAAAAGH");
     }
 }

@@ -29,6 +29,13 @@ public class UIManager : MonoBehaviour
     private float cdSecondAttack;
     private bool secondCDDone = true;
 
+    [SerializeField] private GameObject bluePlanetPanel;
+
+    public void GameStarted()
+    {
+        bluePlanetPanel.SetActive(false);
+    }
+
     public void UsedNormalAttack(float cd)
     {
         cdNormalAttack = cd;
@@ -94,5 +101,23 @@ public class UIManager : MonoBehaviour
     {
         maxUsesSecondAttack = currentUsesSecondAttack = uses;
     }
+
+    public void UsedSpecialDash()
+    {
+        //cambiar sprite de dashattackuse y dashattackimage 
+
+    }
+
+    public void UsingBluePlanet()
+    {
+        bluePlanetPanel.SetActive(true);
+    }
+
+    public void EndedBluePlanet()
+    {
+        bluePlanetPanel.SetActive(false);
+    }
+
+
 
 }

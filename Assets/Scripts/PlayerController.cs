@@ -97,6 +97,18 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private int maxUsesSecondaryATK;
     private int currentUsesSecondaryATK;
 
+  
+
+    [SerializeField] private float distanceOfSpecialDash;
+    [SerializeField] private GameObject specialDashGO;
+    private bool hasUsedSpecialDash = false;
+    [SerializeField] private GameObject specialDashDangerZone;
+    [SerializeField] private GameObject dangerZoneCenter;
+
+    private RaycastHit2D[] dashHits;
+    private bool specialDashing;
+
+
     private enum uniqueSkill
     {
         bluePlanet,
@@ -104,21 +116,29 @@ public class PlayerController : MonoBehaviour
     }
 
     [SerializeField] private uniqueSkill currentUS;
+    [SerializeField] private int maxUScharges;
+    [SerializeField] private int currentUScharges;
 
-
-
+    [SerializeField] private float durationBP;
     [SerializeField] private float timeSlowed = 0.2f;
-    [SerializeField] private float distanceOfSpecialDash;
-    [SerializeField] private GameObject specialDashGO;
-    private bool hasUsedSpecialDash = false;
 
-    private RaycastHit2D[] dashHits;
-    private bool specialDashing;
+    private LineRenderer turqoiseSplashRenderer;
+    private RaycastHit2D turqoiseSplashHit;
+    [SerializeField] private float durationTS;
+    private bool shootingRay = false;
+    private Vector2 turqoiseSplashDir;
+    private RaycastHit2D[] enemiesToKill;
+    [SerializeField] private LayerMask enemyLayer;
+    private float distanceOfTS;
 
     private void Start()
     {
-        specialDashGO.transform.localScale = new Vector2 (distanceOfSpecialDash, distanceOfSpecialDash);
+        specialDashGO.transform.localScale = new Vector2 (distanceOfSpecialDash*2, distanceOfSpecialDash*2);
         specialDashGO.SetActive(false);
+        specialDashDangerZone.SetActive(false);
+        turqoiseSplashRenderer = GetComponent<LineRenderer>();
+        turqoiseSplashRenderer.enabled = false;
+        dangerZoneCenter.transform.localScale = new Vector3(distanceOfSpecialDash, 1, 1);
         currentUsesSecondaryATK = maxUsesSecondaryATK;
         rigid = GetComponent<Rigidbody2D>();
         coll = GetComponent<CapsuleCollider2D>();
@@ -128,7 +148,7 @@ public class PlayerController : MonoBehaviour
         uiManager = FindObjectOfType<UIManager>();
 
         uiManager.SetSecondary(maxUsesSecondaryATK);
-
+        uiManager.GameStarted();
     }
     // Update is called once per frame
     void Update()
@@ -147,12 +167,30 @@ public class PlayerController : MonoBehaviour
         }
         if (specialDashing)
         {
+            Vector2 dir = Direction();
+            dangerZoneCenter.transform.right = dir;
             if (Input.GetKeyUp(KeyCode.LeftShift) && !hasUsedSpecialDash)
             {
                 ExitDashMode();
+                specialDashDangerZone.SetActive(false);
+                uiManager.UsedSpecialDash();
             }
             return;
         }
+
+        if (shootingRay)
+        {
+            rigid.velocity = new Vector2(0f,0f);
+            rigid.gravityScale = 0;
+            enemiesToKill = Physics2D.RaycastAll(transform.position, turqoiseSplashDir,distanceOfTS, enemyLayer);
+            if(enemiesToKill.Length > 0) KillEnemies();
+            enemiesToKill = Physics2D.RaycastAll(transform.position - new Vector3 (0,0.5f,0), turqoiseSplashDir, distanceOfTS, enemyLayer);
+            if (enemiesToKill.Length > 0) KillEnemies();
+            enemiesToKill = Physics2D.RaycastAll(transform.position + new Vector3(0, 0.5f, 0), turqoiseSplashDir, distanceOfTS, enemyLayer);
+            if (enemiesToKill.Length > 0) KillEnemies();
+            return;
+        }
+
         InputsUpdate();
 
 
@@ -229,6 +267,51 @@ public class PlayerController : MonoBehaviour
         {
             Attack2(currentSA);
         }
+
+        if (Input.GetKeyDown(KeyCode.Space) && currentUScharges >= maxUScharges)
+        {
+            UniqueSkill();
+        }
+
+    }
+
+    private void KillEnemies()
+    {
+        foreach(RaycastHit2D enemy in enemiesToKill)
+        {
+            enemy.collider.gameObject.GetComponent<AnimalEnemy>().Kill();
+        }
+    }
+
+    private void UniqueSkill()
+    {
+        if (currentUS == uniqueSkill.bluePlanet) StartCoroutine(BluePlanet());
+        else if (currentUS == uniqueSkill.turqoiseSplash) StartCoroutine(TurqoiseSplash());
+        else return;
+    }
+
+    private IEnumerator TurqoiseSplash()
+    {
+        turqoiseSplashDir = Direction();
+        turqoiseSplashHit = Physics2D.Raycast(transform.position, turqoiseSplashDir, 200 , groundLayer);
+        turqoiseSplashRenderer.SetPosition(0, transform.position);
+        turqoiseSplashRenderer.SetPosition(1, turqoiseSplashHit.point);
+        distanceOfTS = Mathf.Sqrt((Mathf.Abs(turqoiseSplashHit.point.x - transform.position.x) * Mathf.Abs(turqoiseSplashHit.point.x - transform.position.x)) + (Mathf.Abs(turqoiseSplashHit.point.y - transform.position.y) * Mathf.Abs(turqoiseSplashHit.point.y - transform.position.y)));
+        shootingRay = true;
+        turqoiseSplashRenderer.enabled = true;
+        yield return new WaitForSeconds(durationTS);
+        shootingRay = false;
+        rigid.gravityScale = 3;
+        turqoiseSplashRenderer.enabled = false;
+    }
+
+    private IEnumerator BluePlanet()
+    {
+        Time.timeScale = timeSlowed;
+        uiManager.UsingBluePlanet();
+        yield return new WaitForSeconds(durationBP * timeSlowed);
+        uiManager.EndedBluePlanet();
+        Time.timeScale = 1f;
     }
 
     private void EnterDashMode()
@@ -236,12 +319,13 @@ public class PlayerController : MonoBehaviour
         Time.timeScale = 0.2f;
         specialDashGO.SetActive(true);
         specialDashing = true;
+        specialDashDangerZone.SetActive(true);
     }
 
     private void ExitDashMode()
     {
         specialDashing = false;
-        //hasUsedSpecialDash = true;
+        hasUsedSpecialDash = true;
         Time.timeScale = 1f;
         specialDashGO.SetActive(false);
         //rayo hacia el ratón
@@ -272,10 +356,30 @@ public class PlayerController : MonoBehaviour
         }
 
         if (finalPos == new Vector2(-1000, -1000)) finalPos = transform.position + (new Vector3(dir.x,dir.y,0) * distanceOfSpecialDash);
+        Vector2 aux = new Vector2(transform.position.x, transform.position.y);
+        dashHits = Physics2D.RaycastAll(transform.position - new Vector3(0,1,0), dir, distanceOfSpecialDash);
+        foreach (RaycastHit2D rayh in dashHits)
+        {
+            if (rayh.collider.gameObject.CompareTag("Enemy"))
+            {
+                rayh.collider.gameObject.GetComponent<AnimalEnemy>().Kill();
+            }
+        }
+
+        dashHits = Physics2D.RaycastAll(transform.position + new Vector3(0, 1, 0), dir, distanceOfSpecialDash);
+        foreach (RaycastHit2D rayh in dashHits)
+        {
+            if (rayh.collider.gameObject.CompareTag("Enemy"))
+            {
+                rayh.collider.gameObject.GetComponent<AnimalEnemy>().Kill();
+            }
+        }
+
 
         //mover el pj hasta el final del rayo o hasta la pared con la que choque
 
-        transform.Translate(finalPos);
+        Debug.Log(finalPos - aux);
+        transform.Translate(finalPos - aux);
 
     }
 
@@ -431,7 +535,7 @@ public class PlayerController : MonoBehaviour
         if (wallLeft && jumpedRight)
         {
             horiz = -1;
-            acc = 0.5f;
+            //acc = 0.5f;
             jumpedRight = false;
             if (!spriteRenderer.flipX)
             {
@@ -442,7 +546,7 @@ public class PlayerController : MonoBehaviour
         {
             horiz = 1;
             jumpedLeft = false;
-            acc = 0;
+            //acc = 0;
             if (spriteRenderer.flipX)
             {
                 spriteRenderer.flipX = false;
@@ -454,7 +558,7 @@ public class PlayerController : MonoBehaviour
     {
         if (jumpedLeft || jumpedRight)
         {
-            acc = 0;
+            //acc = 0;
             return;
         }
         Vector2 mov = new Vector2 (0,rigid.velocity.y);
@@ -654,12 +758,15 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        
         if (collision.gameObject.CompareTag("Room"))
         {
+            if (gameObject.CompareTag("Attack")) return;
             currentRoom = collision.gameObject.GetComponent<Room>();
         }
         else if (collision.gameObject.CompareTag("Ladder"))
         {
+            if (gameObject.CompareTag("Attack")) return;
             Ladder ladderaux = collision.gameObject.GetComponent<Ladder>();
             if (ladderaux != null)
             {
@@ -705,7 +812,7 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D collision)
     {
-        if (collision.gameObject.CompareTag("Explosion"))
+        if (collision.gameObject.CompareTag("Explosion") && !gameObject.CompareTag("Attack"))
         {
             if (!shielding && !dead)
             {
@@ -716,6 +823,7 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D collision)
     {
+        if (gameObject.CompareTag("Attack")) return;
         if (collision.gameObject.CompareTag("Ladder") )
         {
             if (currentLadder != null && collision.GetComponent<Ladder>() == currentLadder && !climbing)
