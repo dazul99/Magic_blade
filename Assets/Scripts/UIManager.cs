@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
@@ -13,7 +14,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI secondAttackUses;
 
     [SerializeField] private Image dashAttackImage;
-    [SerializeField] private Image dashAttackUse;
 
     [SerializeField] private TextMeshProUGUI normalAttackTime;
     [SerializeField] private TextMeshProUGUI secondAttackTime;
@@ -22,25 +22,73 @@ public class UIManager : MonoBehaviour
     private int currentUsesSecondAttack;
 
     private float currentCDNormalAttack;
-    private float cdNormalAttack;
     private bool normalCDDone = true;
 
     private float currentCDSecondAttack;
-    private float cdSecondAttack;
     private bool secondCDDone = true;
 
     [SerializeField] private GameObject bluePlanetPanel;
 
+
+    [SerializeField] private Slider uniqueSkillSlider;
+
+    private PlayerController playerController;
+
+    [SerializeField] private GameObject workStationPanel;
+
+    [SerializeField] private Toggle[] scndryTgls;
+    private int scndryATglsIndex;
+
+
+    [SerializeField] private Toggle[] uSTgls;
+    private int uSTglsIndex;
+
+    private bool changing;
+
+    private Color usedSkillColor = Color.gray;
+    private Color availableSkillColor = Color.white;
+
+    [SerializeField] private float timeToEndStage;
+    [SerializeField] private TextMeshProUGUI timeLeft;
+
+    [SerializeField] private GameObject pausePanel;
+
+    [SerializeField] private GameObject gameOverPanel;
+
+    private void Start()
+    {
+        playerController = FindObjectOfType<PlayerController>();
+        workStationPanel.SetActive(false);
+        foreach(Toggle toggle in scndryTgls) { toggle.isOn = false; }
+        foreach(Toggle toggle in uSTgls) {  toggle.isOn = false; }
+
+        timeLeft.text = timeToEndStage.ToString();
+
+    }
+    
     public void GameStarted()
     {
         bluePlanetPanel.SetActive(false);
+        pausePanel.SetActive(false);
+        gameOverPanel.SetActive(false);
+        StartCoroutine(Countdown());
+    }
+
+    private IEnumerator Countdown()
+    {
+        while (timeToEndStage > 0)
+        {
+            yield return new WaitForSeconds(0.1f);
+            timeToEndStage -= 0.1f;
+            timeToEndStage = Mathf.Round(timeToEndStage * 100) / 100;
+            timeLeft.text = timeToEndStage.ToString();
+        }
+        //YOU LOSE
     }
 
     public void UsedNormalAttack(float cd)
     {
-        cdNormalAttack = cd;
         currentCDNormalAttack = cd;
-        normalAttackImage.fillAmount =1f;
         
         normalAttackTime.text = currentCDNormalAttack.ToString();
         StartCoroutine(NormalCooldown());
@@ -49,6 +97,7 @@ public class UIManager : MonoBehaviour
     private IEnumerator NormalCooldown()
     {
         normalCDDone = false;
+        normalAttackImage.color = usedSkillColor;
         while(!normalCDDone)
         {
             currentCDNormalAttack -= 0.05f;
@@ -59,17 +108,18 @@ public class UIManager : MonoBehaviour
                 currentCDNormalAttack = 0f;
             }
             normalAttackTime.text = "" + (Mathf.Round(currentCDNormalAttack*10) / 10); 
-            normalAttackImage.fillAmount = currentCDNormalAttack / cdNormalAttack;
+            
         }
+        normalAttackImage.color = availableSkillColor;
+        playerController.NormalCDDone();
         normalAttackTime.text = "";
     }
 
     public void UsedSecondAttack(float cd)
     {
-        cdSecondAttack = cd;
         currentCDSecondAttack = cd;
-        secondAttackImage.fillAmount = 1f;
-        if (maxUsesSecondAttack >= 0)
+        
+        if (currentUsesSecondAttack >= 0)
         {
             currentUsesSecondAttack--;
             secondAttackUses.text = currentUsesSecondAttack + "/" + maxUsesSecondAttack;
@@ -82,6 +132,7 @@ public class UIManager : MonoBehaviour
     private IEnumerator SecondCooldown()
     {
         secondCDDone = false;
+        secondAttackImage.color = usedSkillColor;
         while (!secondCDDone)
         {
             currentCDSecondAttack -= 0.05f;
@@ -92,20 +143,17 @@ public class UIManager : MonoBehaviour
                 currentCDSecondAttack = 0f;
             }
             secondAttackTime.text = "" + (Mathf.Round(currentCDSecondAttack * 10) / 10);
-            secondAttackImage.fillAmount = currentCDSecondAttack / cdSecondAttack;
-        }
-        secondAttackTime.text = "";
-    }
 
-    public void SetSecondary(int uses)
-    {
-        maxUsesSecondAttack = currentUsesSecondAttack = uses;
+        }
+        secondAttackImage.color = availableSkillColor;
+        playerController.SecondaryCDDone();
+        secondAttackTime.text = "";
     }
 
     public void UsedSpecialDash()
     {
         //cambiar sprite de dashattackuse y dashattackimage 
-
+        dashAttackImage.color = usedSkillColor;
     }
 
     public void UsingBluePlanet()
@@ -118,6 +166,92 @@ public class UIManager : MonoBehaviour
         bluePlanetPanel.SetActive(false);
     }
 
+    public void ChangeUniqueSkill(int x)
+    {
+        uniqueSkillSlider.value = x;
+    }
 
+    public void ChangedUS(int x)
+    {
+        if (changing) return;
+        if(x == uSTglsIndex)
+        {
+            changing = true;
+            uSTgls[uSTglsIndex].isOn = true;
+            changing = false;
+            return;
+        }
+        changing = true;
+        uSTgls[uSTglsIndex].isOn = false;
+        uSTglsIndex = x;
+        changing = false;
+    }
+    public void ChangedSA(int x)
+    {
+        if (changing) return;
+        if (x == scndryATglsIndex)
+        {
+            changing = true;
+            scndryTgls[scndryATglsIndex].isOn = true;
+            changing = false;
+            return;
+        }
+        changing = true;
+        scndryTgls[scndryATglsIndex].isOn = false;
+        scndryATglsIndex = x;
+        changing = false;
+    }
+
+    public void ShowWorkStation()
+    {
+        workStationPanel.SetActive(true);
+        scndryATglsIndex = playerController.CurrentScndryA();
+        uSTglsIndex = playerController.CurrentUS();
+        scndryTgls[scndryATglsIndex].isOn = true;
+        uSTgls[uSTglsIndex].isOn = true;
+    }
+
+    public void HideWorkStation()
+    {
+        workStationPanel.SetActive(false);
+        playerController.SetSecondaryAttack(scndryATglsIndex);
+        playerController.SetUniqueSkill(uSTglsIndex);
+        playerController.ExitStation();
+    }
+
+    public void UpdateSecondAttack(int x)
+    {
+        currentUsesSecondAttack = x;
+        maxUsesSecondAttack = x;
+        secondAttackUses.text = currentUsesSecondAttack + "/" + maxUsesSecondAttack;
+    }
+
+    public void ShowPausePanel()
+    {
+        pausePanel.SetActive(true);
+    }
+
+    public void HidePausePanel()
+    {
+        pausePanel.SetActive(false);
+        playerController.ResumeGame();
+    }
+
+    public void GoToMainMenu()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(0);
+    }
+
+    public void Retry()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+    
+    public void GameOver()
+    {
+        gameOverPanel.SetActive(true);
+    }
 
 }

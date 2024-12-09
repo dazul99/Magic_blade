@@ -338,6 +338,14 @@ public class AnimalEnemy : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (gameObject.CompareTag("EnemyAttack")) return;
+        if (collision.gameObject.CompareTag("InvisibleWall"))
+        {
+            rigid.velocity = new Vector2(0, rigid.velocity.y);
+            Vector2 aux = collision.transform.position - transform.position;
+            rigid.AddForce(aux * 100);
+        }
+
         if (dead) return;
 
         if (collision.gameObject.CompareTag("Attack"))
@@ -357,6 +365,10 @@ public class AnimalEnemy : MonoBehaviour
         {
             if (ItHits(collision)) Die();
             else return;
+        }
+        else if (collision.gameObject.CompareTag("Shot"))
+        {
+            Die();
         }
         else if (collision.gameObject.CompareTag("Room") && collision.gameObject.GetComponent<Room>() != currentRoom)
         {
@@ -381,6 +393,9 @@ public class AnimalEnemy : MonoBehaviour
         rigid.inertia = 0f;
         dead = true;
         gameObject.layer = 0;
+        gameManager.EnemyDied();
+        coll.enabled = false;
+        rigid.gravityScale = 0f;
         Debug.Log("AAAAAAGH");
     }
 

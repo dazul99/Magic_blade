@@ -26,10 +26,11 @@ public class Projectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if(collision.gameObject.CompareTag("Ladder") || collision.gameObject.CompareTag("ThroughFloor") || collision.gameObject.CompareTag("Room"))
+        if(collision.gameObject.CompareTag("Ladder") || collision.gameObject.CompareTag("ThroughFloor") || collision.gameObject.CompareTag("Room") || collision.gameObject.CompareTag("MainCamera"))
         {
             return;
         }
+        if (collision.gameObject.CompareTag("Door") && collision.isTrigger) return;
         if (gameObject.CompareTag("Shot"))
         {
             if (collision.gameObject.CompareTag("Player"))

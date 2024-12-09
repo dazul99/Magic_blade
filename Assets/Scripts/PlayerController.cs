@@ -2,6 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public enum SecondaryATKs
+{
+    icicleShot,
+    definitiveShield,
+    fireball
+}
+
+public enum UniqueSkill
+{
+    bluePlanet,
+    turqoiseSplash
+}
 
 public class PlayerController : MonoBehaviour
 {
@@ -23,24 +37,17 @@ public class PlayerController : MonoBehaviour
     private float attackTime = 0.3f;
     [SerializeField] private float attackMove = 1f;
 
-    private enum secondaryATKs
-    {
-        icicleShot,
-        definitiveShield,
-        fireball
-    }
-
-    [SerializeField] private secondaryATKs currentSA;
+    [SerializeField] private SecondaryATKs currentSA;
 
     private bool canUseScndry = true;
+    private int[] maxUses;
 
     private float defShieldCD = 1f;
     [SerializeField] private float shieldDuration = 1f;
+    
 
-    private float IceShotCD = 6f;
+    private float IceShotCD = 1f;
     [SerializeField] private GameObject icicleShotObject;
-
-
 
     [SerializeField] private GameObject fire;
     private float fireCD = 12f;
@@ -52,14 +59,14 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private LayerMask groundLayer;
 
-    [SerializeField] private float height =(float) 1.03;
+    [SerializeField] private float height = (float)1.03;
     [SerializeField] private float width = 0.5f;
     private bool canDash = true;
     private bool dashing = false;
     private float dashCD = 0.5f;
     private float dashTime = 0.2f;
     private float horiz;
-    private float acc=0;
+    private float acc = 0;
 
     private float maxJump = 0.2f;
 
@@ -67,11 +74,6 @@ public class PlayerController : MonoBehaviour
     private RaycastHit2D wallHits;
     private bool touchingGround = false;
     private bool goingthrough = false;
-
-    private bool crouching = false;
-    private Vector2 crouchOffset = new Vector2(0, -0.5f);
-    private Vector2 crouchSize = new Vector2(1f, 1f);
-    private Vector2 normalSize = new Vector2(1f, 2f);
 
     private bool wallLeft = false;
     private bool wallRight = false;
@@ -97,7 +99,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private int maxUsesSecondaryATK;
     private int currentUsesSecondaryATK;
 
-  
+
 
     [SerializeField] private float distanceOfSpecialDash;
     [SerializeField] private GameObject specialDashGO;
@@ -109,15 +111,11 @@ public class PlayerController : MonoBehaviour
     private bool specialDashing;
 
 
-    private enum uniqueSkill
-    {
-        bluePlanet,
-        turqoiseSplash
-    }
 
-    [SerializeField] private uniqueSkill currentUS;
-    [SerializeField] private int maxUScharges;
-    [SerializeField] private int currentUScharges;
+
+    [SerializeField] private UniqueSkill currentUS;
+    [SerializeField] private int maxUSCharges;
+    [SerializeField] private int currentUSCharges;
 
     [SerializeField] private float durationBP;
     [SerializeField] private float timeSlowed = 0.2f;
@@ -131,23 +129,40 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask enemyLayer;
     private float distanceOfTS;
 
-    private void Start()
+    private bool onWorkStation;
+    private bool working;
+    private Door door;
+    private bool paused = false;
+
+
+
+
+    private void Awake()
     {
-        specialDashGO.transform.localScale = new Vector2 (distanceOfSpecialDash*2, distanceOfSpecialDash*2);
-        specialDashGO.SetActive(false);
-        specialDashDangerZone.SetActive(false);
+        maxUses = new int[3];
+        maxUses[0] = 50; //7
+        maxUses[1] = 50;
+        maxUses[2] = 50; //3
         turqoiseSplashRenderer = GetComponent<LineRenderer>();
         turqoiseSplashRenderer.enabled = false;
-        dangerZoneCenter.transform.localScale = new Vector3(distanceOfSpecialDash, 1, 1);
+        maxUsesSecondaryATK = maxUses[(int)currentSA];
         currentUsesSecondaryATK = maxUsesSecondaryATK;
         rigid = GetComponent<Rigidbody2D>();
         coll = GetComponent<CapsuleCollider2D>();
+        
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
+    private void Start()
+    {
+        specialDashGO.transform.localScale = new Vector2(distanceOfSpecialDash * 2, distanceOfSpecialDash * 2);
+        specialDashGO.SetActive(false);
+        specialDashDangerZone.SetActive(false);
+        dangerZoneCenter.transform.localScale = new Vector3(distanceOfSpecialDash, 1, 1);
         gameManager = FindObjectOfType<GameManager>();
         attackColl = attackHitObject.GetComponent<Collider2D>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
         uiManager = FindObjectOfType<UIManager>();
-
-        uiManager.SetSecondary(maxUsesSecondaryATK);
+        uiManager.UpdateSecondAttack(maxUsesSecondaryATK);
         uiManager.GameStarted();
     }
     // Update is called once per frame
@@ -159,12 +174,13 @@ public class PlayerController : MonoBehaviour
 
         CheckWalls();
 
-        
 
-        if (dashing || attacking || climbing || shielding)
+
+        if (dashing || attacking || climbing || shielding|| working || paused)
         {
             return;
         }
+
         if (specialDashing)
         {
             Vector2 dir = Direction();
@@ -180,11 +196,11 @@ public class PlayerController : MonoBehaviour
 
         if (shootingRay)
         {
-            rigid.velocity = new Vector2(0f,0f);
+            rigid.velocity = new Vector2(0f, 0f);
             rigid.gravityScale = 0;
-            enemiesToKill = Physics2D.RaycastAll(transform.position, turqoiseSplashDir,distanceOfTS, enemyLayer);
-            if(enemiesToKill.Length > 0) KillEnemies();
-            enemiesToKill = Physics2D.RaycastAll(transform.position - new Vector3 (0,0.5f,0), turqoiseSplashDir, distanceOfTS, enemyLayer);
+            enemiesToKill = Physics2D.RaycastAll(transform.position, turqoiseSplashDir, distanceOfTS, enemyLayer);
+            if (enemiesToKill.Length > 0) KillEnemies();
+            enemiesToKill = Physics2D.RaycastAll(transform.position - new Vector3(0, 0.5f, 0), turqoiseSplashDir, distanceOfTS, enemyLayer);
             if (enemiesToKill.Length > 0) KillEnemies();
             enemiesToKill = Physics2D.RaycastAll(transform.position + new Vector3(0, 0.5f, 0), turqoiseSplashDir, distanceOfTS, enemyLayer);
             if (enemiesToKill.Length > 0) KillEnemies();
@@ -199,8 +215,8 @@ public class PlayerController : MonoBehaviour
         {
             CheckGravity();
         }
-        
-        
+
+
     }
 
     private void InputsUpdate()
@@ -241,17 +257,6 @@ public class PlayerController : MonoBehaviour
 
         Movement();
 
-        if (Input.GetKeyDown(KeyCode.LeftControl) && touchingGround)
-        {
-            GEDDAN();
-        }
-        else if (Input.GetKeyUp(KeyCode.LeftControl) && touchingGround)
-        {
-            if (crouching)
-            {
-                GetUp();
-            }
-        }
 
         if (Input.GetKeyDown(KeyCode.LeftShift) && !hasUsedSpecialDash)
         {
@@ -268,11 +273,67 @@ public class PlayerController : MonoBehaviour
             Attack2(currentSA);
         }
 
-        if (Input.GetKeyDown(KeyCode.Space) && currentUScharges >= maxUScharges)
+        if (Input.GetKeyDown(KeyCode.Space) && currentUSCharges >= maxUSCharges)
         {
-            UniqueSkill();
+            UseUniqueSkill();
+            currentUSCharges = 0;
+            uiManager.ChangeUniqueSkill(0);
         }
 
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            if (onWorkStation)
+            {
+                ChangingSkills();
+            }
+            else if(door != null)
+            {
+                door.Open();
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            PauseGame();
+        }
+
+        //BORRAR DESPUÉS
+        if(Input.GetKey(KeyCode.P) && Input.GetKeyDown(KeyCode.L))
+        {
+            HasKilled();
+        }
+
+        if (Input.GetKey(KeyCode.P) && Input.GetKeyDown(KeyCode.M))
+        {
+            SceneManager.LoadScene(1);
+        }
+
+    }
+
+    private void PauseGame()
+    {
+        Time.timeScale = 0f;
+        paused = true;
+        uiManager.ShowPausePanel();
+    }
+
+    public void ResumeGame()
+    {
+        Time.timeScale = 1f;
+        paused = false;
+    }
+
+    private void ChangingSkills()
+    {
+        uiManager.ShowWorkStation();
+        Time.timeScale = 0f;
+        working = true;
+    }
+
+    public void ExitStation()
+    {
+        Time.timeScale = 1f;
+        working = false;
     }
 
     private void KillEnemies()
@@ -283,10 +344,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void UniqueSkill()
+    private void UseUniqueSkill()
     {
-        if (currentUS == uniqueSkill.bluePlanet) StartCoroutine(BluePlanet());
-        else if (currentUS == uniqueSkill.turqoiseSplash) StartCoroutine(TurqoiseSplash());
+        if (currentUS == global::UniqueSkill.bluePlanet) StartCoroutine(BluePlanet());
+        else if (currentUS == global::UniqueSkill.turqoiseSplash) StartCoroutine(TurqoiseSplash());
         else return;
     }
 
@@ -325,7 +386,7 @@ public class PlayerController : MonoBehaviour
     private void ExitDashMode()
     {
         specialDashing = false;
-        hasUsedSpecialDash = true;
+        //hasUsedSpecialDash = true; //CAMBIAR DESPUÉS
         Time.timeScale = 1f;
         specialDashGO.SetActive(false);
         //rayo hacia el ratón
@@ -340,7 +401,7 @@ public class PlayerController : MonoBehaviour
             {
                 rayh.collider.gameObject.GetComponent<AnimalEnemy>().Kill();
             }
-            else if (rayh.collider.gameObject.CompareTag("Wall"))
+            else if (rayh.collider.gameObject.CompareTag("Wall") || rayh.collider.gameObject.CompareTag("Door"))
             {
                 finalPos = rayh.point;
                 if (dir.y > 0)
@@ -378,33 +439,30 @@ public class PlayerController : MonoBehaviour
 
         //mover el pj hasta el final del rayo o hasta la pared con la que choque
 
-        Debug.Log(finalPos - aux);
         transform.Translate(finalPos - aux);
 
     }
 
 
-    private void Attack2(secondaryATKs sA)
+    private void Attack2(SecondaryATKs sA)
     {
-        IEnumerator aux = null;
         currentUsesSecondaryATK--;
-        if(sA == secondaryATKs.icicleShot)
+        if(sA == SecondaryATKs.icicleShot)
         {
-            aux = IcicleShot();
+            IcicleShot();
         }
-        else if (sA == secondaryATKs.definitiveShield)
+        else if (sA == SecondaryATKs.definitiveShield)
         {
-            aux = DefinitiveShield();
+            StartCoroutine(DefinitiveShield());
         }
-        else if(sA == secondaryATKs.fireball)
+        else if(sA == SecondaryATKs.fireball)
         {
-            aux = Fireball();
+            Fireball();
         }
         else
         {
             return;
         }
-        StartCoroutine(aux);
     }
 
     private void CheckGravity()
@@ -452,24 +510,6 @@ public class PlayerController : MonoBehaviour
         if (jumpedLeft) jumpedLeft = false;
     }
 
-    private void GEDDAN()
-    {
-        Debug.Log("sneaky");
-        coll.offset = crouchOffset;
-        coll.size = crouchSize;
-        speed /= 2;
-        crouching = true;
-    }
-
-    private void GetUp()
-    {
-        Debug.Log("sneakyn't");
-        coll.offset = Vector2.zero;
-        coll.size = normalSize;
-        speed *= 2;
-        crouching = false;
-    }
-
     private void CheckGround()
     {
         if(rigid.velocity.y > 0 && !goingthrough)
@@ -484,7 +524,6 @@ public class PlayerController : MonoBehaviour
         }
 
         float dist = 0.05f + ddelta;
-        if (crouching) dist *= 2;
         Debug.DrawRay(transform.position - new Vector3((float)0.25, 1, 0), Vector3.down * ddelta);
         Debug.DrawRay(transform.position + new Vector3((float)0.25, -1, 0), Vector3.down * ddelta);
         groundHits = Physics2D.Raycast(transform.position - new Vector3((float)0.25, 1, 0), Vector2.down, dist, groundLayer);
@@ -706,11 +745,9 @@ public class PlayerController : MonoBehaviour
         else acc = 0.3f * aux;
         uiManager.UsedNormalAttack(attackCD);
 
-        yield return new WaitForSeconds(attackCD);
-        canAttack = true;
     }
 
-    private IEnumerator IcicleShot()
+    private void IcicleShot()
     {
         Vector2 dir = Direction();
         Vector3 aux = new Vector3 (0,0,0);
@@ -718,8 +755,6 @@ public class PlayerController : MonoBehaviour
         canUseScndry = false;
         Instantiate(icicleShotObject, transform.position + aux, Quaternion.LookRotation(transform.forward, dir));
         uiManager.UsedSecondAttack(IceShotCD);
-        yield return new WaitForSeconds(IceShotCD);
-        canUseScndry = true;
     }
 
     private IEnumerator DefinitiveShield()
@@ -728,14 +763,15 @@ public class PlayerController : MonoBehaviour
         canUseScndry = false;
         rigid.velocity = Vector3.zero;
         acc = 0f;
+        gameObject.GetComponent<SpriteRenderer>().color = Color.blue;
         yield return new WaitForSeconds(shieldDuration);
+        gameObject.GetComponent<SpriteRenderer>().color = Color.white;
+
         shielding = false;
         uiManager.UsedSecondAttack(defShieldCD);
-        yield return new WaitForSeconds(defShieldCD);
-        canUseScndry = true;
     }
 
-    private IEnumerator Fireball()
+    private void Fireball()
     {
         Vector2 dir = Direction();
         Vector3 aux = new Vector3(0, 0, 0);
@@ -745,11 +781,18 @@ public class PlayerController : MonoBehaviour
         Instantiate(fire, transform.position + aux, Quaternion.LookRotation(transform.forward, dir));
         uiManager.UsedSecondAttack(fireCD);
 
-        yield return new WaitForSeconds(fireCD); //fireCD
-        canUseScndry = true;
 
     }
 
+    public void SecondaryCDDone()
+    {
+        canUseScndry = true;
+    }
+
+    public void NormalCDDone()
+    {
+        canAttack = true;
+    }
 
     public void ResetGoThrough(bool x)
     {
@@ -759,7 +802,9 @@ public class PlayerController : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
         
-        if (collision.gameObject.CompareTag("Room"))
+        if (collision.gameObject.CompareTag("Door")) door = collision.gameObject.GetComponent<Door>();
+        else if (collision.gameObject.CompareTag("WorkStation")) onWorkStation = true;
+        else if (collision.gameObject.CompareTag("Room"))
         {
             if (gameObject.CompareTag("Attack")) return;
             currentRoom = collision.gameObject.GetComponent<Room>();
@@ -790,7 +835,7 @@ public class PlayerController : MonoBehaviour
                 Vector2 enemypos = collision.gameObject.transform.position;
                 Vector2 dir = new Vector2(transform.position.x - enemypos.x, transform.position.y - enemypos.y);
                 dir.Normalize();
-                
+
                 rigid.AddForce(dir * 400);
                 collision.gameObject.GetComponentInParent<AnimalEnemy>().Knockback(-dir);
             }
@@ -834,12 +879,15 @@ public class PlayerController : MonoBehaviour
             ladderBottom = ladderTop = false;
 
         }
+        else if (collision.gameObject.CompareTag("WorkStation")) onWorkStation = false;
+        else if (collision.gameObject.CompareTag("Door")) door = null;
     }
 
     private void Die()
     {
         rigid.velocity = Vector2.zero;
         dead = true;
+        StartCoroutine(GameOver());
     }
 
     public bool MeleeAttacking()
@@ -867,6 +915,46 @@ public class PlayerController : MonoBehaviour
         Vector2 cPos = gameManager.CrossPos();
         Vector2 pos = new Vector2(transform.position.x, transform.position.y);
         return (cPos - pos).normalized;
+    }
+
+    public void HasKilled()
+    {
+        if (currentUSCharges < maxUSCharges)
+        {
+            currentUSCharges++;
+            uiManager.ChangeUniqueSkill(currentUSCharges);
+        }
+        
+    }
+
+    public int CurrentUS()
+    {
+        return (int) currentUS;
+    }
+
+    public int CurrentScndryA()
+    {
+        return (int)currentSA;
+    }
+
+    public void SetUniqueSkill(int x)
+    {
+        currentUS = (UniqueSkill) x;
+    }
+
+    public void SetSecondaryAttack(int x)
+    {
+        currentSA = (SecondaryATKs) x;
+        maxUsesSecondaryATK = maxUses[x];
+        currentUsesSecondaryATK = maxUsesSecondaryATK;
+        uiManager.UpdateSecondAttack(maxUses[x]);
+    }
+
+    public IEnumerator GameOver()
+    {
+        yield return new WaitForSeconds(0.5f);
+        Time.timeScale = 0f;
+        uiManager.GameOver();
     }
 
 }

@@ -10,6 +10,8 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private PlatformThrough[] platforms;
 
+    [SerializeField] private GameObject workStation;
+
     // Update is called once per frame
     void Update()
     {
@@ -32,5 +34,10 @@ public class GameManager : MonoBehaviour
         return new Vector2 (crosshair.transform.position.x, crosshair.transform.position.y);
     }
 
+    public void EnemyDied()
+    {
+        playerController.HasKilled();
+        if(workStation.activeSelf) workStation.SetActive(false);
+    }
 
 }

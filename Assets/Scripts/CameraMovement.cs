@@ -8,7 +8,7 @@ public class CameraMovement : MonoBehaviour
 {
     private PlayerController player;
 
-    private Collider2D coll;
+   [SerializeField] private Collider2D coll;
 
     private Bounds bound;
     private Vector2 xBounds;
@@ -21,7 +21,6 @@ public class CameraMovement : MonoBehaviour
 
     private void Awake()
     {
-        coll = GetComponent<Collider2D>();
 
         bound = coll.bounds;
         xBounds.x = bound.center.x + bound.extents.x;
