@@ -34,6 +34,11 @@ public class GameManager : MonoBehaviour
         return new Vector2 (crosshair.transform.position.x, crosshair.transform.position.y);
     }
 
+    public Vector3 PlayerPos()
+    {
+        return playerController.transform.position;
+    }
+
     public void EnemyDied()
     {
         playerController.HasKilled();

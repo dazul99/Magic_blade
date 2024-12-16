@@ -12,10 +12,13 @@ public class Projectile : MonoBehaviour
 
     [SerializeField] private float explosionTime = 0.75f;
 
+    private GameManager gameManager;
 
 
     private void Start()
     {
+        gameManager = FindObjectOfType<GameManager>();
+
         rb = GetComponent<Rigidbody2D>();
         rb.AddForce(transform.up * speed);
         if (explodes)
@@ -37,12 +40,19 @@ public class Projectile : MonoBehaviour
             {
                 return;
             }
+            else if (collision.gameObject.CompareTag("EnemyAttack"))
+            {
+                transform.rotation = Quaternion.LookRotation(Vector3.forward, gameManager.PlayerPos());
+                ReturnPriv();
+                return;
+            }
         }
         if(gameObject.CompareTag("EnemyAttack") && collision.gameObject.CompareTag("Attack"))
         {
             transform.rotation = collision.gameObject.transform.rotation;
 
             ReturnPriv();
+            return;
         }
         if (explodes)
         {

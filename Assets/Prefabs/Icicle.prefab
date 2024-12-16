@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5926735845940921411}
   - component: {fileID: 3049472438597837800}
   - component: {fileID: 257560434885121524}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: Icicle
   m_TagString: Shot
   m_Icon: {fileID: 0}
@@ -151,6 +151,7 @@ MonoBehaviour:
   speed: 1500
   explodes: 0
   explosion: {fileID: 0}
+  explosionTime: 0.75
 --- !u!50 &257560434885121524
 Rigidbody2D:
   serializedVersion: 4

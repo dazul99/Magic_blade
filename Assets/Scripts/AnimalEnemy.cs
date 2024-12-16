@@ -70,6 +70,9 @@ public class AnimalEnemy : MonoBehaviour
     private float stunnedTime;
     private bool stunned;
 
+    [SerializeField] private bool canDeflect = false;
+    [SerializeField] private LayerMask projectileLayer;
+
     private void Start()
     {
         gameManager = FindObjectOfType<GameManager>();
@@ -93,7 +96,15 @@ public class AnimalEnemy : MonoBehaviour
         if (rigid.velocity.x > 0 && lookingRight) lookingRight = false;
         else if (rigid.velocity.x < 0 && !lookingRight) lookingRight = true;
 
-        
+        if (canDeflect && !attacking)
+        {
+            Collider2D auxcoll = Physics2D.OverlapCircle(transform.position, rangeOfAttack, projectileLayer);
+            
+            if (auxcoll != null)
+            {
+                StartCoroutine(Attack1(false, auxcoll));
+            }
+        }
 
         if (!dead)
         {
@@ -140,8 +151,11 @@ public class AnimalEnemy : MonoBehaviour
                 else //si está suficientemente cerca
                 {
                     rigid.velocity = Vector2.zero;
+                    attacking = true;
                     StartCoroutine(Attack1());
                 }
+
+                
 
             }
             else if (suspiciousState && !notEnterAgain)
@@ -199,15 +213,26 @@ public class AnimalEnemy : MonoBehaviour
         yield return null;
     }
 
-    private IEnumerator Attack1()
+    private IEnumerator Attack1(bool attackingPlayer = true, Collider2D target = null)
     {
-        Vector2 cPos = new(player.transform.position.x, player.transform.position.y);
-        attacking = true;
-        Vector2 pos = new(transform.position.x, transform.position.y);
-        Vector2 dir = cPos - pos;
-        dir.Normalize();
+        Vector2 cPos;
+        Vector2 pos;
+        if (attackingPlayer)
+        {
+            cPos = new(player.transform.position.x, player.transform.position.y);
+            pos = new(transform.position.x, transform.position.y);
+            yield return new WaitForSeconds(attackDelay);
+        }
+        else
+        {
+            pos = new(transform.position.x, transform.position.y);
+            cPos = target.ClosestPoint(pos);
+        }
+
         attackHitObject.transform.right = cPos - pos;
-        yield return new WaitForSeconds(attackDelay);
+        Vector2 dir = cPos - pos;
+        
+        dir.Normalize();
         if (dead) yield break;
         actuallyAttacking = true;
         rigid.AddForce(dir * attackMov);
@@ -338,15 +363,14 @@ public class AnimalEnemy : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (gameObject.CompareTag("EnemyAttack")) return;
+        if (dead) return;
+        if (!gameObject.CompareTag("Enemy")) return;
         if (collision.gameObject.CompareTag("InvisibleWall"))
         {
             rigid.velocity = new Vector2(0, rigid.velocity.y);
             Vector2 aux = collision.transform.position - transform.position;
             rigid.AddForce(aux * 100);
         }
-
-        if (dead) return;
 
         if (collision.gameObject.CompareTag("Attack"))
         {
@@ -397,6 +421,7 @@ public class AnimalEnemy : MonoBehaviour
         coll.enabled = false;
         rigid.gravityScale = 0f;
         Debug.Log("AAAAAAGH");
+        Time.timeScale = 0f;
     }
 
     public void Stun(float t)
