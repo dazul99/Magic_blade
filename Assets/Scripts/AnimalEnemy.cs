@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using static Unity.Burst.Intrinsics.X86;
 
 public class AnimalEnemy : MonoBehaviour
 {
@@ -42,7 +43,6 @@ public class AnimalEnemy : MonoBehaviour
     [SerializeField] private LayerMask groundLayer;
 
     [SerializeField] private float rangeOfAttack;
-    [SerializeField] private int typeOfEnemy;
 
 
     private Room currentRoom;
@@ -75,6 +75,14 @@ public class AnimalEnemy : MonoBehaviour
 
     [SerializeField] private bool flying = false;
 
+
+    [SerializeField] private bool ranged = false;
+    [SerializeField] private GameObject projectile;
+
+    [SerializeField] private bool vertical = false;
+
+    private float boundOfRangedMovement = 0f;
+
     private void Start()
     {
         gameManager = FindObjectOfType<GameManager>();
@@ -87,7 +95,7 @@ public class AnimalEnemy : MonoBehaviour
 
     private void Update()
     {
-        if (!flying) Detect();
+        if (!flying && !ranged) Detect();
         else DetectRadius();
         if (stunned)
         {
@@ -104,6 +112,10 @@ public class AnimalEnemy : MonoBehaviour
 
             if (idleState)
             {
+                if (ranged)
+                {
+                    return;
+                }
                 distanceToLP = Mathf.Abs(originalPos.x - transform.position.x);
                 if (distanceToLP > 1f) //mirar si está lejos de su posición inicial
                 {
@@ -121,6 +133,8 @@ public class AnimalEnemy : MonoBehaviour
             {
                 if (notEnterAgain) notEnterAgain = false;
 
+                
+
                 //Comprobar si aún se le ve
 
                 direction = player.transform.position - transform.position;
@@ -134,6 +148,14 @@ public class AnimalEnemy : MonoBehaviour
 
                 if (!chasingState) return;
                 Debug.DrawRay(transform.position, new Vector2(rangeOfAttack, 0));
+
+                if (ranged)
+                {
+                    attacking = true;   
+                    StartCoroutine(RangedAttack());
+                    return;
+                }
+
                 //acercarse si no está lo suficientemente cerca
                 if (Physics2D.OverlapCircle(transform.position, rangeOfAttack, playerLayer) == null) 
                 {
@@ -151,9 +173,11 @@ public class AnimalEnemy : MonoBehaviour
                 }
                 else //si está suficientemente cerca
                 {
-                    rigid.velocity = new Vector2(0, rigid.velocity.y);
+                    if(!flying) rigid.velocity = new Vector2(0, rigid.velocity.y);
+                    else rigid.velocity = new Vector2(0,0);
                     attacking = true;
-                    StartCoroutine(Attack1());
+                    StartCoroutine(MeleeAttack());
+                    
                 }
 
                 
@@ -161,6 +185,11 @@ public class AnimalEnemy : MonoBehaviour
             }
             else if (suspiciousState && !notEnterAgain)
             {
+                if(ranged)
+                {
+                    suspiciousState = false;
+                    idleState = true;
+                }
                 if (lastPosition != null) //mirar si tenemos una última posición
                 {
                     distanceToLP = Mathf.Abs(lastPosition.x - transform.position.x);
@@ -214,22 +243,14 @@ public class AnimalEnemy : MonoBehaviour
         yield return null;
     }
 
-    private IEnumerator Attack1(bool attackingPlayer = true, Collider2D target = null)
+    private IEnumerator MeleeAttack()
     {
         Vector2 cPos;
         Vector2 pos;
-        if (attackingPlayer)
-        {
-            cPos = new(player.transform.position.x, player.transform.position.y);
-            pos = new(transform.position.x, transform.position.y);
-            yield return new WaitForSeconds(attackDelay);
-        }
-        else
-        {
-            pos = new(transform.position.x, transform.position.y);
-            cPos = target.ClosestPoint(pos);
-        }
-
+        cPos = new(player.transform.position.x, player.transform.position.y);
+        pos = new(transform.position.x, transform.position.y);
+        
+        yield return new WaitForSeconds(attackDelay);
         attackHitObject.transform.right = cPos - pos;
         Vector2 dir = cPos - pos;
         
@@ -245,9 +266,35 @@ public class AnimalEnemy : MonoBehaviour
         actuallyAttacking = false;
         attackColl.enabled = false;
         attackObject.SetActive(false);
-        attacking = false;
+        
         yield return new WaitForSeconds(attackCD);
+        attacking = false;
     }
+
+    private IEnumerator RangedAttack()
+    {
+        Vector2 cPos;
+        Vector2 pos;
+        cPos = new(player.transform.position.x, player.transform.position.y);
+        pos = new(transform.position.x, transform.position.y);
+
+        yield return new WaitForSeconds(attackDelay);
+
+        Vector2 dir = cPos - pos;
+        dir.Normalize();
+
+        if (dead) yield break;
+
+        actuallyAttacking = true;
+
+        Instantiate(projectile, transform.position + new Vector3(dir.x, dir.y, 0), Quaternion.LookRotation(transform.forward, dir));
+
+        actuallyAttacking = false;
+
+        yield return new WaitForSeconds(attackCD);
+        attacking = false;
+    }
+
 
 
 
@@ -269,7 +316,7 @@ public class AnimalEnemy : MonoBehaviour
     private void DetectRadius()
     {
         Collider2D flyingDetecting = Physics2D.OverlapCircle(transform.position, rangeOfDetection, playerLayer);
-        if( flyingDetecting != null )
+        if( flyingDetecting != null && ItHits(flyingDetecting))
         {
             idleState = false;
             suspiciousState = false;

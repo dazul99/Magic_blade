@@ -48,12 +48,17 @@ public class Projectile : MonoBehaviour
                 return;
             }
         }
-        if(gameObject.CompareTag("EnemyAttack") && collision.gameObject.CompareTag("Attack"))
+        if(gameObject.CompareTag("EnemyShot"))
         {
-            transform.rotation = collision.gameObject.transform.rotation;
+            if (collision.gameObject.CompareTag("Attack"))
+            {
+                transform.rotation = collision.gameObject.transform.rotation;
 
-            ReturnPriv();
-            return;
+                ReturnPriv();
+                return;
+            }
+            else if (collision.gameObject.CompareTag("Enemy")) return;
+            
         }
         if (explodes)
         {
