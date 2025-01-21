@@ -29,7 +29,7 @@ public class Projectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if(collision.gameObject.CompareTag("Ladder") || collision.gameObject.CompareTag("ThroughFloor") || collision.gameObject.CompareTag("Room") || collision.gameObject.CompareTag("MainCamera"))
+        if(collision.gameObject.CompareTag("Ladder") || collision.gameObject.CompareTag("ThroughFloor") || collision.gameObject.CompareTag("Room") || collision.gameObject.CompareTag("MainCamera") || collision.gameObject.CompareTag("InvisibleWall") || collision.gameObject.CompareTag("WorkStation"))
         {
             return;
         }
@@ -42,6 +42,7 @@ public class Projectile : MonoBehaviour
             }
             else if (collision.gameObject.CompareTag("EnemyAttack"))
             {
+                Debug.Log("a");
                 transform.rotation = Quaternion.LookRotation(Vector3.forward, gameManager.PlayerPos());
                 ReturnPriv();
                 return;

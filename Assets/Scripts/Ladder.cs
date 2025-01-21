@@ -4,20 +4,20 @@ using UnityEngine;
 
 public class Ladder : MonoBehaviour
 {
-    [SerializeField] private GameObject Top;
-    [SerializeField] private GameObject Bottom;
+    [SerializeField] private GameObject top;
+    [SerializeField] private GameObject bottom;
 
-    public GameObject GetTop() { return Top; }
-    public GameObject GetBottom() { return Bottom;}
+    public GameObject GetTop() { return top; }
+    public GameObject GetBottom() { return bottom;}
 
     public Vector2 TopPos()
     {
-        return Top.transform.position;
+        return top.transform.position;
     }
 
     public Vector2 BottomPos()
     {
-        return Bottom.transform.position;
+        return bottom.transform.position;
     }
 
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,13 +13,23 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private GameObject workStation;
 
-    // Update is called once per frame
+    private int numberOfEnemies;
+
+    [SerializeField] private int timeToChangeLevel = 1;
+
+    void Start()
+    {
+        playerController = FindObjectOfType<PlayerController>();
+        numberOfEnemies = FindObjectsOfType<AnimalEnemy>().Length;
+        Debug.Log(numberOfEnemies);
+    }
+
     void Update()
     {
         mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mousePos.z = Camera.main.nearClipPlane;
         crosshair.transform.position = mousePos;
-        playerController = FindObjectOfType<PlayerController>();
+        
     }
 
     public void SetPlatformsTrigger(bool x)
@@ -43,6 +54,28 @@ public class GameManager : MonoBehaviour
     {
         playerController.HasKilled();
         if(workStation.activeSelf) workStation.SetActive(false);
+        numberOfEnemies--;
     }
 
+    public void GotToEnd()
+    {
+        if (AllEnemiesAreDead())
+        {
+            StartCoroutine(ChangeLevel());
+        }
+        return;
+    }
+
+    private IEnumerator ChangeLevel() 
+    {
+        playerController.LockMovement();
+        yield return new WaitForSeconds(timeToChangeLevel);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+    }
+
+    private bool AllEnemiesAreDead()
+    {
+        if (numberOfEnemies == 0) return true;
+        else return false;
+    }
 }

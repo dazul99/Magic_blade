@@ -8,7 +8,7 @@ public class AnimalEnemy : MonoBehaviour
     private GameManager gameManager;
 
     private Rigidbody2D rigid;
-
+    [SerializeField] private GameObject collGO;
     private Collider2D coll;
     private bool dead = false;
 
@@ -73,10 +73,12 @@ public class AnimalEnemy : MonoBehaviour
     [SerializeField] private bool canDeflect = false;
     [SerializeField] private LayerMask projectileLayer;
 
+    [SerializeField] private bool flying = false;
+
     private void Start()
     {
         gameManager = FindObjectOfType<GameManager>();
-        coll = GetComponent<Collider2D>();
+        coll = collGO.GetComponent<Collider2D>();
         rigid = GetComponent<Rigidbody2D>();
         attackColl = attackHitObject.GetComponent<Collider2D>();
         player = FindObjectOfType<PlayerController>();
@@ -85,7 +87,8 @@ public class AnimalEnemy : MonoBehaviour
 
     private void Update()
     {
-        Detect();
+        if (!flying) Detect();
+        else DetectRadius();
         if (stunned)
         {
             rigid.velocity = Vector2.zero;
@@ -95,16 +98,6 @@ public class AnimalEnemy : MonoBehaviour
         detecting = null;
         if (rigid.velocity.x > 0 && lookingRight) lookingRight = false;
         else if (rigid.velocity.x < 0 && !lookingRight) lookingRight = true;
-
-        if (canDeflect && !attacking)
-        {
-            Collider2D auxcoll = Physics2D.OverlapCircle(transform.position, rangeOfAttack, projectileLayer);
-            
-            if (auxcoll != null)
-            {
-                StartCoroutine(Attack1(false, auxcoll));
-            }
-        }
 
         if (!dead)
         {
@@ -119,7 +112,7 @@ public class AnimalEnemy : MonoBehaviour
                 }
                 else
                 {
-                    rigid.velocity = Vector2.zero;
+                    rigid.velocity = new Vector2(0,rigid.velocity.y);
                 }
                 if (notEnterAgain) notEnterAgain = false;
                 return;
@@ -142,15 +135,23 @@ public class AnimalEnemy : MonoBehaviour
                 if (!chasingState) return;
                 Debug.DrawRay(transform.position, new Vector2(rangeOfAttack, 0));
                 //acercarse si no está lo suficientemente cerca
-                if (Physics2D.OverlapCircle(transform.position, rangeOfAttack, playerLayer) == null) //si no está lo suficientemente cerca para atacar
+                if (Physics2D.OverlapCircle(transform.position, rangeOfAttack, playerLayer) == null) 
                 {
-                    if (player.transform.position.x < transform.position.x) directionToMove = -1;
-                    else directionToMove = 1;
-                    rigid.velocity = new Vector2(directionToMove * speed, rigid.velocity.y);
+                    if (!flying)
+                    {
+                        if (player.transform.position.x < transform.position.x) directionToMove = -1;
+                        else directionToMove = 1;
+                        rigid.velocity = new Vector2(directionToMove * speed, rigid.velocity.y);
+                    }
+                    else
+                    {
+                        rigid.velocity = new Vector2(player.transform.position.x - transform.position.x, player.transform.position.y - transform.position.y).normalized * speed;
+                    }
+                    
                 }
                 else //si está suficientemente cerca
                 {
-                    rigid.velocity = Vector2.zero;
+                    rigid.velocity = new Vector2(0, rigid.velocity.y);
                     attacking = true;
                     StartCoroutine(Attack1());
                 }
@@ -265,6 +266,16 @@ public class AnimalEnemy : MonoBehaviour
         front.Normalize();
     }
 
+    private void DetectRadius()
+    {
+        Collider2D flyingDetecting = Physics2D.OverlapCircle(transform.position, rangeOfDetection, playerLayer);
+        if( flyingDetecting != null )
+        {
+            idleState = false;
+            suspiciousState = false;
+            chasingState = true;
+        }
+    }
 
     private void Detect()
     {
@@ -361,6 +372,50 @@ public class AnimalEnemy : MonoBehaviour
         wall = false;
     }
 
+    public bool isDead()
+    {
+        return dead;
+    }
+
+    public void CollidedWithInvisibleWall(Vector3 wallPos)
+    {
+        rigid.velocity = new Vector2(0, rigid.velocity.y);
+        Vector2 aux = wallPos - transform.position;
+        rigid.AddForce(aux * 100);
+    }
+
+    public void GotHit(Collider2D collision)
+    {
+        if (player.MeleeAttacking())
+        {
+            if (actuallyAttacking) return;
+            if (ItHits(collision)) Die();
+            else return;
+        }
+        else
+        {
+            Die();
+        }
+    }
+
+    public void Exploded(Collider2D collision)
+    {
+        if (ItHits(collision) && !canDeflect) Die();
+    }
+    
+    public void GotShot()
+    {
+        if(!canDeflect) Die();
+    }
+
+    public void UpdateRoom(Room r)
+    {
+        if (r != currentRoom)
+        {
+            currentRoom = r;
+        }
+    }
+    /*
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (dead) return;
@@ -399,7 +454,7 @@ public class AnimalEnemy : MonoBehaviour
             currentRoom = collision.gameObject.GetComponent<Room>();
         }
     }
-
+    */
 
     private bool ItHits(Collider2D collision)
     {
@@ -421,7 +476,6 @@ public class AnimalEnemy : MonoBehaviour
         coll.enabled = false;
         rigid.gravityScale = 0f;
         Debug.Log("AAAAAAGH");
-        Time.timeScale = 0f;
     }
 
     public void Stun(float t)

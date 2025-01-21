@@ -38,7 +38,7 @@ public class Connection : MonoBehaviour
     public Room GetOtherRoom(Room room)
     {
         if (room == firstRoom) return secondRoom;
-        else if (room == secondRoom) return firstRoom;
+        if (room == secondRoom) return firstRoom;
         return null;
     }
 

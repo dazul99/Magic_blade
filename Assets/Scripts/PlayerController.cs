@@ -3,24 +3,26 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static Unity.Burst.Intrinsics.X86;
 
 public enum SecondaryATKs
 {
-    icicleShot,
-    definitiveShield,
-    fireball
+    IcicleShot,
+    DefinitiveShield,
+    Fireball
 }
 
 public enum UniqueSkill
 {
-    bluePlanet,
-    turqoiseSplash
+    BluePlanet,
+    TurqoiseSplash
 }
 
 public class PlayerController : MonoBehaviour
 {
 
     private Rigidbody2D rigid;
+    [SerializeField] private GameObject collGO;
     private CapsuleCollider2D coll;
     private GameManager gameManager;
     private SpriteRenderer spriteRenderer;
@@ -133,7 +135,7 @@ public class PlayerController : MonoBehaviour
     private bool working;
     private Door door;
     private bool paused = false;
-
+    private bool locked = false;
 
 
 
@@ -148,7 +150,7 @@ public class PlayerController : MonoBehaviour
         maxUsesSecondaryATK = maxUses[(int)currentSA];
         currentUsesSecondaryATK = maxUsesSecondaryATK;
         rigid = GetComponent<Rigidbody2D>();
-        coll = GetComponent<CapsuleCollider2D>();
+        coll = collGO.GetComponent<CapsuleCollider2D>();
         
         spriteRenderer = GetComponent<SpriteRenderer>();
     }
@@ -164,10 +166,13 @@ public class PlayerController : MonoBehaviour
         uiManager = FindObjectOfType<UIManager>();
         uiManager.UpdateSecondAttack(maxUsesSecondaryATK);
         uiManager.GameStarted();
+
     }
     // Update is called once per frame
     void Update()
     {
+        
+
         if (dead) return;
 
         CheckGround();
@@ -221,10 +226,14 @@ public class PlayerController : MonoBehaviour
 
     private void InputsUpdate()
     {
+
         if (Input.GetKeyDown(KeyCode.S) && touchingGround)
         {
+            Debug.Log("A");
+
             if (ladderTop)
             {
+                Debug.Log("B");
                 StartCoroutine(GoDownLadder());
                 return;
             }
@@ -257,6 +266,7 @@ public class PlayerController : MonoBehaviour
 
         Movement();
 
+        if (locked) return;
 
         if (Input.GetKeyDown(KeyCode.LeftShift) && !hasUsedSpecialDash)
         {
@@ -346,8 +356,8 @@ public class PlayerController : MonoBehaviour
 
     private void UseUniqueSkill()
     {
-        if (currentUS == global::UniqueSkill.bluePlanet) StartCoroutine(BluePlanet());
-        else if (currentUS == global::UniqueSkill.turqoiseSplash) StartCoroutine(TurqoiseSplash());
+        if (currentUS == global::UniqueSkill.BluePlanet) StartCoroutine(BluePlanet());
+        else if (currentUS == global::UniqueSkill.TurqoiseSplash) StartCoroutine(TurqoiseSplash());
         else return;
     }
 
@@ -447,15 +457,15 @@ public class PlayerController : MonoBehaviour
     private void Attack2(SecondaryATKs sA)
     {
         currentUsesSecondaryATK--;
-        if(sA == SecondaryATKs.icicleShot)
+        if(sA == SecondaryATKs.IcicleShot)
         {
             IcicleShot();
         }
-        else if (sA == SecondaryATKs.definitiveShield)
+        else if (sA == SecondaryATKs.DefinitiveShield)
         {
             StartCoroutine(DefinitiveShield());
         }
-        else if(sA == SecondaryATKs.fireball)
+        else if(sA == SecondaryATKs.Fireball)
         {
             Fireball();
         }
@@ -477,24 +487,23 @@ public class PlayerController : MonoBehaviour
 
     private void WallJump()
     {
+        Vector2 aux = Vector2.zero;
+
         if (wallLeft)
         {
 
-            Vector2 aux = Vector2.right * 1.5f + Vector2.up;
-            aux.Normalize();
-            rigid.velocity = Vector2.zero;
-            rigid.AddForce(aux * 700);
+            aux = Vector2.right * 1.5f + Vector2.up;
             jumpedLeft = true;
         }
         else if (wallRight)
         {
-            Vector2 aux = Vector2.left *1.5f + Vector2.up;
-            aux.Normalize();
-            rigid.velocity = Vector2.zero;
-            rigid.AddForce(aux * 700);
+            aux = Vector2.left *1.5f + Vector2.up;
             jumpedRight = true;
         }
 
+        aux.Normalize();
+        rigid.velocity = Vector2.zero;
+        rigid.AddForce(aux * 700);
         StartCoroutine(WallJumpCD());
     }
 
@@ -595,12 +604,21 @@ public class PlayerController : MonoBehaviour
 
     private void Movement()
     {
+        Vector2 mov = new Vector2(0, rigid.velocity.y);
+        if (locked)
+        {
+            horiz = 1;
+            acc = 1;
+            mov.x = horiz * speed * acc;
+            rigid.velocity = mov;
+            return;
+        }
         if (jumpedLeft || jumpedRight)
         {
             //acc = 0;
             return;
         }
-        Vector2 mov = new Vector2 (0,rigid.velocity.y);
+       
 
         if (Input.GetKey(KeyCode.A))
         {
@@ -798,7 +816,82 @@ public class PlayerController : MonoBehaviour
     {
         goingthrough = x;
     }
+    
+    public void SetDoor(Door d)
+    {
+        door = d;
+    }
 
+    public void SetWS(bool ws)
+    {
+        onWorkStation = ws;
+    }
+
+    public void SetRoom(Room r)
+    {
+        currentRoom = r;
+    }
+
+    public void SetLadder(Ladder l, LadderEnd lE)
+    {
+        if (l != null)
+        {
+            currentLadder = l;
+        }
+
+        if (lE.GetTop())
+        {
+            ladderTop = true;
+            ladderBottom = false;
+        }
+        else
+        {
+            ladderTop = false;
+            ladderBottom = true;
+        }
+    }
+
+    public void ExitLadder(Ladder l)
+    {
+        if (currentLadder != null && l == currentLadder && !climbing)
+        {
+            currentLadder = null;
+        }
+
+        ladderBottom = ladderTop = false;
+    }
+
+    public void GotHit(AnimalEnemy aE)
+    {
+        if (attacking)
+        {
+            Vector2 enemypos = aE.gameObject.transform.position;
+            Vector2 dir = new Vector2(transform.position.x - enemypos.x, transform.position.y - enemypos.y);
+            dir.Normalize();
+
+            rigid.AddForce(dir * 400);
+           aE.Knockback(-dir);
+        }
+        else if (shielding)
+        {
+            aE.Stun(stunTime);
+        }
+        else if (!dead)
+        {
+            Die();
+        }
+    }
+
+    public void GotShot(Projectile p)
+    {
+        if(attacking)
+        {
+            Vector2 dir = Direction();
+            p.Return(dir);
+        }
+        
+    }
+    /*
     private void OnTriggerEnter2D(Collider2D collision)
     {
         
@@ -828,6 +921,7 @@ public class PlayerController : MonoBehaviour
                 ladderBottom = true;
             }
         }
+
         else if (collision.gameObject.CompareTag("EnemyAttack"))
         {
             if (attacking)
@@ -881,6 +975,14 @@ public class PlayerController : MonoBehaviour
         }
         else if (collision.gameObject.CompareTag("WorkStation")) onWorkStation = false;
         else if (collision.gameObject.CompareTag("Door")) door = null;
+    }
+    */
+    public void DiePublic()
+    {
+        if (!shielding && !dead)
+        {
+            Die();
+        }
     }
 
     private void Die()
@@ -955,6 +1057,27 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         Time.timeScale = 0f;
         uiManager.GameOver();
+    }
+
+    public bool IsDashing()
+    {
+        return dashing;
+    }
+
+    public void LockMovement()
+    {
+        locked = true;
+    }
+
+    public void UnlockMovement()
+    {
+        locked = false;
+        acc = 0;
+    }
+
+    public void EnteredEndOfLevel()
+    {
+        gameManager.GotToEnd();
     }
 
 }
