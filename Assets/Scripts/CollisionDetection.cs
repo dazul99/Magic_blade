@@ -18,7 +18,11 @@ public class CollisionDetection : MonoBehaviour
         if (collision.gameObject.CompareTag("Door")) playerController.SetDoor(collision.gameObject.GetComponent<Door>());
         else if (collision.gameObject.CompareTag("WorkStation")) playerController.SetWS(true);
         else if (collision.gameObject.CompareTag("Room")) playerController.SetRoom(collision.gameObject.GetComponent<Room>());
-        else if (collision.gameObject.CompareTag("Ladder")) playerController.SetLadder(collision.gameObject.GetComponent<Ladder>(), collision.gameObject.GetComponent<LadderEnd>());
+        else if (collision.gameObject.CompareTag("Ladder"))
+        {
+            if (collision.gameObject.GetComponent<Ladder>() != null) playerController.SetLadder(collision.gameObject.GetComponent<Ladder>());
+            else playerController.SetLadderEnd(collision.gameObject.GetComponent<LadderEnd>());
+        }
         else if (collision.gameObject.CompareTag("EnemyAttack") && !playerController.IsDashing()) playerController.GotHit(collision.gameObject.GetComponentInParent<AnimalEnemy>());
         else if (collision.gameObject.CompareTag("EnemyShot") && !playerController.IsDashing()) playerController.GotShot(collision.gameObject.GetComponentInParent<Projectile>());
         else if (collision.gameObject.CompareTag("EndOfLevel")) playerController.EnteredEndOfLevel();

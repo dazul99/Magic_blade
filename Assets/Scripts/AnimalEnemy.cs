@@ -81,7 +81,7 @@ public class AnimalEnemy : MonoBehaviour
 
     [SerializeField] private bool vertical = false;
 
-    private float boundOfRangedMovement = 0f;
+    private float movementOfRanged = 0.5f;
 
     private void Start()
     {
@@ -91,6 +91,8 @@ public class AnimalEnemy : MonoBehaviour
         attackColl = attackHitObject.GetComponent<Collider2D>();
         player = FindObjectOfType<PlayerController>();
         originalPos = transform.position;
+        if(ranged) StartCoroutine(MovementRanged());
+
     }
 
     private void Update()
@@ -114,6 +116,7 @@ public class AnimalEnemy : MonoBehaviour
             {
                 if (ranged)
                 {
+
                     return;
                 }
                 distanceToLP = Mathf.Abs(originalPos.x - transform.position.x);
@@ -155,7 +158,7 @@ public class AnimalEnemy : MonoBehaviour
                     StartCoroutine(RangedAttack());
                     return;
                 }
-
+                Debug.Log("IT'S SEPTEMBER");
                 //acercarse si no está lo suficientemente cerca
                 if (Physics2D.OverlapCircle(transform.position, rangeOfAttack, playerLayer) == null) 
                 {
@@ -187,8 +190,11 @@ public class AnimalEnemy : MonoBehaviour
             {
                 if(ranged)
                 {
+                    
                     suspiciousState = false;
                     idleState = true;
+                    StartCoroutine(MovementRanged());
+                    return;
                 }
                 if (lastPosition != null) //mirar si tenemos una última posición
                 {
@@ -273,12 +279,14 @@ public class AnimalEnemy : MonoBehaviour
 
     private IEnumerator RangedAttack()
     {
+        yield return new WaitForSeconds(attackDelay);
+
         Vector2 cPos;
         Vector2 pos;
         cPos = new(player.transform.position.x, player.transform.position.y);
         pos = new(transform.position.x, transform.position.y);
 
-        yield return new WaitForSeconds(attackDelay);
+        
 
         Vector2 dir = cPos - pos;
         dir.Normalize();
@@ -511,6 +519,26 @@ public class AnimalEnemy : MonoBehaviour
 
         attackHits = Physics2D.Raycast(aux1, dir.normalized, dist, groundLayer);
         return attackHits.collider == null;
+    }
+
+    private IEnumerator MovementRanged()
+    {
+        while (!dead && idleState)
+        {
+            
+            if (!vertical)
+            {
+                transform.Translate(0, movementOfRanged, 0);
+            }
+            else
+            {
+                transform.Translate(movementOfRanged, 0, 0);
+            }
+
+            yield return new WaitForSeconds(0.3f);
+
+            movementOfRanged *= -1;
+        }
     }
 
     private void Die()

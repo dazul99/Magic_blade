@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static Unity.Burst.Intrinsics.X86;
 
 public class Projectile : MonoBehaviour
 {
@@ -45,6 +46,7 @@ public class Projectile : MonoBehaviour
                 Debug.Log("a");
                 transform.rotation = Quaternion.LookRotation(Vector3.forward, gameManager.PlayerPos());
                 ReturnPriv();
+                gameObject.tag = "EnemyShot";
                 return;
             }
         }
@@ -52,9 +54,10 @@ public class Projectile : MonoBehaviour
         {
             if (collision.gameObject.CompareTag("Attack"))
             {
-                transform.rotation = collision.gameObject.transform.rotation;
-
+                Vector3 auxPos = new Vector3(gameManager.CrossPos().x, gameManager.CrossPos().y,0);
+                transform.rotation = Quaternion.LookRotation(Vector3.forward, (auxPos - transform.position).normalized);
                 ReturnPriv();
+                gameObject.tag = "Shot";
                 return;
             }
             else if (collision.gameObject.CompareTag("Enemy")) return;

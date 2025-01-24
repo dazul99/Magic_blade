@@ -166,7 +166,6 @@ public class PlayerController : MonoBehaviour
         uiManager = FindObjectOfType<UIManager>();
         uiManager.UpdateSecondAttack(maxUsesSecondaryATK);
         uiManager.GameStarted();
-
     }
     // Update is called once per frame
     void Update()
@@ -832,14 +831,19 @@ public class PlayerController : MonoBehaviour
         currentRoom = r;
     }
 
-    public void SetLadder(Ladder l, LadderEnd lE)
+    public void SetLadder(Ladder l)
     {
         if (l != null)
         {
             currentLadder = l;
         }
 
-        if (lE.GetTop())
+        
+    }
+    
+    public void SetLadderEnd(LadderEnd ladderEnd)
+    {
+        if (ladderEnd.GetTop())
         {
             ladderTop = true;
             ladderBottom = false;
@@ -888,8 +892,9 @@ public class PlayerController : MonoBehaviour
         {
             Vector2 dir = Direction();
             p.Return(dir);
+            return;
         }
-        
+        Die();
     }
     /*
     private void OnTriggerEnter2D(Collider2D collision)
