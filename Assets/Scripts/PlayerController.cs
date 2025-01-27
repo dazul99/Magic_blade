@@ -349,7 +349,7 @@ public class PlayerController : MonoBehaviour
     {
         foreach(RaycastHit2D enemy in enemiesToKill)
         {
-            enemy.collider.gameObject.GetComponent<AnimalEnemy>().Kill();
+            enemy.collider.gameObject.GetComponentInParent<AnimalEnemy>().Kill();
         }
     }
 
@@ -408,7 +408,8 @@ public class PlayerController : MonoBehaviour
         {
             if (rayh.collider.gameObject.CompareTag("Enemy"))
             {
-                rayh.collider.gameObject.GetComponent<AnimalEnemy>().Kill();
+                rayh.collider.gameObject.GetComponentInParent<AnimalEnemy>().Kill();
+
             }
             else if (rayh.collider.gameObject.CompareTag("Wall") || rayh.collider.gameObject.CompareTag("Door"))
             {
@@ -432,7 +433,7 @@ public class PlayerController : MonoBehaviour
         {
             if (rayh.collider.gameObject.CompareTag("Enemy"))
             {
-                rayh.collider.gameObject.GetComponent<AnimalEnemy>().Kill();
+                rayh.collider.gameObject.GetComponentInParent<AnimalEnemy>().Kill();
             }
         }
 
@@ -441,7 +442,7 @@ public class PlayerController : MonoBehaviour
         {
             if (rayh.collider.gameObject.CompareTag("Enemy"))
             {
-                rayh.collider.gameObject.GetComponent<AnimalEnemy>().Kill();
+                rayh.collider.gameObject.GetComponentInParent<AnimalEnemy>().Kill();
             }
         }
 

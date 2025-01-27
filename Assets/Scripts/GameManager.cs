@@ -17,6 +17,8 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private int timeToChangeLevel = 1;
 
+    [SerializeField] private Collider2D endOfLevel;
+
     void Start()
     {
         playerController = FindObjectOfType<PlayerController>();
@@ -55,6 +57,7 @@ public class GameManager : MonoBehaviour
         playerController.HasKilled();
         if(workStation.activeSelf) workStation.SetActive(false);
         numberOfEnemies--;
+        if (numberOfEnemies == 0) endOfLevel.isTrigger = true;
     }
 
     public void GotToEnd()

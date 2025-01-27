@@ -116,7 +116,6 @@ public class AnimalEnemy : MonoBehaviour
             {
                 if (ranged)
                 {
-
                     return;
                 }
                 distanceToLP = Mathf.Abs(originalPos.x - transform.position.x);
@@ -135,7 +134,6 @@ public class AnimalEnemy : MonoBehaviour
             else if (chasingState)
             {
                 if (notEnterAgain) notEnterAgain = false;
-
                 
 
                 //Comprobar si aún se le ve
@@ -151,6 +149,7 @@ public class AnimalEnemy : MonoBehaviour
 
                 if (!chasingState) return;
                 Debug.DrawRay(transform.position, new Vector2(rangeOfAttack, 0));
+                Debug.Log("DO YOU REMEMBER");
 
                 if (ranged)
                 {
@@ -158,7 +157,6 @@ public class AnimalEnemy : MonoBehaviour
                     StartCoroutine(RangedAttack());
                     return;
                 }
-                Debug.Log("IT'S SEPTEMBER");
                 //acercarse si no está lo suficientemente cerca
                 if (Physics2D.OverlapCircle(transform.position, rangeOfAttack, playerLayer) == null) 
                 {
@@ -190,7 +188,6 @@ public class AnimalEnemy : MonoBehaviour
             {
                 if(ranged)
                 {
-                    
                     suspiciousState = false;
                     idleState = true;
                     StartCoroutine(MovementRanged());
@@ -444,23 +441,23 @@ public class AnimalEnemy : MonoBehaviour
         if (player.MeleeAttacking())
         {
             if (actuallyAttacking) return;
-            if (ItHits(collision)) Die();
+            if (ItHits(collision)) StartCoroutine(Die());
             else return;
         }
         else
         {
-            Die();
+            StartCoroutine(Die());
         }
     }
 
     public void Exploded(Collider2D collision)
     {
-        if (ItHits(collision) && !canDeflect) Die();
+        if (ItHits(collision) && !canDeflect) StartCoroutine(Die());
     }
     
     public void GotShot()
     {
-        if(!canDeflect) Die();
+        if(!canDeflect) StartCoroutine(Die());
     }
 
     public void UpdateRoom(Room r)
@@ -541,7 +538,7 @@ public class AnimalEnemy : MonoBehaviour
         }
     }
 
-    private void Die()
+    private IEnumerator Die()
     {
         rigid.velocity = Vector2.zero;
         rigid.inertia = 0f;
@@ -549,8 +546,12 @@ public class AnimalEnemy : MonoBehaviour
         gameObject.layer = 0;
         gameManager.EnemyDied();
         coll.enabled = false;
-        rigid.gravityScale = 0f;
+        rigid.gravityScale = 1f;
+        rigid.includeLayers = groundLayer;
         Debug.Log("AAAAAAGH");
+
+        yield return new WaitForSeconds(4f);
+        Destroy(gameObject);
     }
 
     public void Stun(float t)
@@ -578,7 +579,7 @@ public class AnimalEnemy : MonoBehaviour
 
     public void Kill()
     {
-        Die();
+        StartCoroutine(Die());
     }
 
 }

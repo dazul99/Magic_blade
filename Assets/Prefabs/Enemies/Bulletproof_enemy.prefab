@@ -387,7 +387,7 @@ MonoBehaviour:
   attackHitObject: {fileID: 3857687742747308622}
   attackMov: 500
   attackCD: 2
-  attackDelay: 0.2
+  attackDelay: 0.3
   canDeflect: 1
   projectileLayer:
     serializedVersion: 2

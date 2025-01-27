@@ -382,14 +382,17 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   rangeOfAttack: 3
-  typeOfEnemy: 0
   speed: 10
   attackObject: {fileID: 5522077006746736173}
   attackHitObject: {fileID: 5118339521811088113}
   attackMov: 500
   attackCD: 2
-  attackDelay: 0.25
-  canDeflect: 1
+  attackDelay: 0.5
+  canDeflect: 0
   projectileLayer:
     serializedVersion: 2
     m_Bits: 2048
+  flying: 0
+  ranged: 0
+  projectile: {fileID: 0}
+  vertical: 0
