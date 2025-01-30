@@ -492,12 +492,12 @@ public class PlayerController : MonoBehaviour
         if (wallLeft)
         {
 
-            aux = Vector2.right * 1.5f + Vector2.up;
+            aux = Vector2.right + Vector2.up;
             jumpedLeft = true;
         }
         else if (wallRight)
         {
-            aux = Vector2.left *1.5f + Vector2.up;
+            aux = Vector2.left + Vector2.up;
             jumpedRight = true;
         }
 
