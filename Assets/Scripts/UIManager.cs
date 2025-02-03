@@ -55,6 +55,8 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private GameObject gameOverPanel;
 
+    [SerializeField] private Image[] scndryImages;
+
     private void Start()
     {
         playerController = FindObjectOfType<PlayerController>();
@@ -83,7 +85,7 @@ public class UIManager : MonoBehaviour
             timeToEndStage = Mathf.Round(timeToEndStage * 100) / 100;
             timeLeft.text = timeToEndStage.ToString();
         }
-        //YOU LOSE
+        playerController.DiePublic();
     }
 
     public void UsedNormalAttack(float cd)
@@ -215,15 +217,17 @@ public class UIManager : MonoBehaviour
     {
         workStationPanel.SetActive(false);
         playerController.SetSecondaryAttack(scndryATglsIndex);
+        secondAttackImage.sprite = scndryImages[scndryATglsIndex].sprite;
         playerController.SetUniqueSkill(uSTglsIndex);
         playerController.ExitStation();
     }
 
-    public void UpdateSecondAttack(int x)
+    public void UpdateSecondAttack(int x, int y)
     {
         currentUsesSecondAttack = x;
         maxUsesSecondAttack = x;
         secondAttackUses.text = currentUsesSecondAttack + "/" + maxUsesSecondAttack;
+        secondAttackImage.sprite = scndryImages[y].sprite;
     }
 
     public void ShowPausePanel()

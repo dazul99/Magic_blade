@@ -149,7 +149,6 @@ public class AnimalEnemy : MonoBehaviour
 
                 if (!chasingState) return;
                 Debug.DrawRay(transform.position, new Vector2(rangeOfAttack, 0));
-                Debug.Log("DO YOU REMEMBER");
 
                 if (ranged)
                 {
@@ -237,7 +236,6 @@ public class AnimalEnemy : MonoBehaviour
                     aux += 0.1f;
                     yield return new WaitForSeconds(0.1f);
                 }
-                Debug.Log("Change");
                 aux = 0f;
                 lookingRight = !lookingRight;
             }
@@ -548,7 +546,6 @@ public class AnimalEnemy : MonoBehaviour
         coll.enabled = false;
         rigid.gravityScale = 1f;
         rigid.includeLayers = groundLayer;
-        Debug.Log("AAAAAAGH");
 
         yield return new WaitForSeconds(4f);
         Destroy(gameObject);

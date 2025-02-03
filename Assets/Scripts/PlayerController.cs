@@ -96,7 +96,7 @@ public class PlayerController : MonoBehaviour
     private bool shielding = false;
     [SerializeField] private float stunTime = 3f;
 
-    private UIManager uiManager;
+    [SerializeField] private UIManager uiManager;
 
     [SerializeField] private int maxUsesSecondaryATK;
     private int currentUsesSecondaryATK;
@@ -142,13 +142,11 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         maxUses = new int[3];
-        maxUses[0] = 50; //7
+        maxUses[0] = 7; //7
         maxUses[1] = 50;
-        maxUses[2] = 50; //3
+        maxUses[2] = 3; //3
         turqoiseSplashRenderer = GetComponent<LineRenderer>();
         turqoiseSplashRenderer.enabled = false;
-        maxUsesSecondaryATK = maxUses[(int)currentSA];
-        currentUsesSecondaryATK = maxUsesSecondaryATK;
         rigid = GetComponent<Rigidbody2D>();
         coll = collGO.GetComponent<CapsuleCollider2D>();
         
@@ -163,8 +161,8 @@ public class PlayerController : MonoBehaviour
         dangerZoneCenter.transform.localScale = new Vector3(distanceOfSpecialDash, 1, 1);
         gameManager = FindObjectOfType<GameManager>();
         attackColl = attackHitObject.GetComponent<Collider2D>();
-        uiManager = FindObjectOfType<UIManager>();
-        uiManager.UpdateSecondAttack(maxUsesSecondaryATK);
+        //uiManager = FindObjectOfType<UIManager>();
+        //uiManager.UpdateSecondAttack(maxUsesSecondaryATK);
         uiManager.GameStarted();
     }
     // Update is called once per frame
@@ -228,11 +226,9 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.S) && touchingGround)
         {
-            Debug.Log("A");
 
             if (ladderTop)
             {
-                Debug.Log("B");
                 StartCoroutine(GoDownLadder());
                 return;
             }
@@ -670,7 +666,6 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator Dash()
     {
-        Debug.Log("DASH");
         canDash = false;
         dashing = true;
         float aux = rigid.gravityScale;
@@ -1035,6 +1030,17 @@ public class PlayerController : MonoBehaviour
         
     }
 
+    public int GetUSCharges()
+    {
+        return currentUSCharges;
+    }
+
+    public void SetUSCharges(int x)
+    {
+        currentUSCharges = x;
+        uiManager.ChangeUniqueSkill(currentUSCharges);
+    }
+
     public int CurrentUS()
     {
         return (int) currentUS;
@@ -1055,7 +1061,7 @@ public class PlayerController : MonoBehaviour
         currentSA = (SecondaryATKs) x;
         maxUsesSecondaryATK = maxUses[x];
         currentUsesSecondaryATK = maxUsesSecondaryATK;
-        uiManager.UpdateSecondAttack(maxUses[x]);
+        uiManager.UpdateSecondAttack(maxUses[x], x);
     }
 
     public IEnumerator GameOver()

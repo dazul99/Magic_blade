@@ -16,6 +16,8 @@ public class GameManager : MonoBehaviour
     private int numberOfEnemies;
 
     [SerializeField] private int timeToChangeLevel = 1;
+    [SerializeField] private int timeToLoadLevel = 1;
+
 
     [SerializeField] private Collider2D endOfLevel;
 
@@ -23,7 +25,15 @@ public class GameManager : MonoBehaviour
     {
         playerController = FindObjectOfType<PlayerController>();
         numberOfEnemies = FindObjectsOfType<AnimalEnemy>().Length;
-        Debug.Log(numberOfEnemies);
+        if(SceneManager.GetActiveScene().buildIndex != 1)
+        {
+            StartCoroutine(LoadLevel());
+        }
+        else
+        {
+            playerController.SetUniqueSkill(0);
+            playerController.SetSecondaryAttack(0);
+        }
     }
 
     void Update()
@@ -73,7 +83,26 @@ public class GameManager : MonoBehaviour
     {
         playerController.LockMovement();
         yield return new WaitForSeconds(timeToChangeLevel);
+        SaveGame();
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+    }
+
+    private void SaveGame()
+    {
+        PlayerPrefs.SetInt("Level", SceneManager.GetActiveScene().buildIndex + 1);
+        PlayerPrefs.SetInt("Ultimate_Skill_Charges", playerController.GetUSCharges());
+        PlayerPrefs.SetInt("Ultimate_Skill", playerController.CurrentUS());
+        PlayerPrefs.SetInt("Secondary_Attack", playerController.CurrentScndryA());
+    }
+
+    private IEnumerator LoadLevel()
+    {
+        playerController.LockMovement();
+        playerController.SetUSCharges(PlayerPrefs.GetInt("Ultimate_Skill_Charges"));
+        playerController.SetUniqueSkill(PlayerPrefs.GetInt("Ultimate_Skill"));
+        playerController.SetSecondaryAttack(PlayerPrefs.GetInt("Secondary_Attack"));
+        yield return new WaitForSeconds(timeToLoadLevel);
+        playerController.UnlockMovement();
     }
 
     private bool AllEnemiesAreDead()
