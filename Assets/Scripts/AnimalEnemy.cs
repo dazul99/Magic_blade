@@ -83,6 +83,8 @@ public class AnimalEnemy : MonoBehaviour
 
     private float movementOfRanged = 0.5f;
 
+    private AudioManager audioManager;
+
     private void Start()
     {
         gameManager = FindObjectOfType<GameManager>();
@@ -92,6 +94,7 @@ public class AnimalEnemy : MonoBehaviour
         player = FindObjectOfType<PlayerController>();
         originalPos = transform.position;
         if(ranged) StartCoroutine(MovementRanged());
+        audioManager = FindObjectOfType<AudioManager>();
 
     }
 
@@ -250,7 +253,7 @@ public class AnimalEnemy : MonoBehaviour
         Vector2 pos;
         cPos = new(player.transform.position.x, player.transform.position.y);
         pos = new(transform.position.x, transform.position.y);
-        
+        audioManager.PlaySwordAttack();
         yield return new WaitForSeconds(attackDelay);
         attackHitObject.transform.right = cPos - pos;
         Vector2 dir = cPos - pos;
@@ -280,7 +283,7 @@ public class AnimalEnemy : MonoBehaviour
         Vector2 pos;
         cPos = new(player.transform.position.x, player.transform.position.y);
         pos = new(transform.position.x, transform.position.y);
-
+        audioManager.PlayCastIcicleShot();
         
 
         Vector2 dir = cPos - pos;
@@ -444,6 +447,7 @@ public class AnimalEnemy : MonoBehaviour
         }
         else
         {
+            audioManager.PlayDeathEnemySword();
             StartCoroutine(Die());
         }
     }
@@ -455,7 +459,11 @@ public class AnimalEnemy : MonoBehaviour
     
     public void GotShot()
     {
-        if(!canDeflect) StartCoroutine(Die());
+        if (!canDeflect)
+        {
+            audioManager.PlayDeathIcicleShot();
+            StartCoroutine(Die());
+        }
     }
 
     public void UpdateRoom(Room r)

@@ -21,13 +21,19 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private Collider2D endOfLevel;
 
+    private AudioManager audioManager;
+
     void Start()
     {
+        audioManager = FindObjectOfType<AudioManager>();
         playerController = FindObjectOfType<PlayerController>();
         numberOfEnemies = FindObjectsOfType<AnimalEnemy>().Length;
-        if(SceneManager.GetActiveScene().buildIndex != 1)
+        StartCoroutine(LoadLevel());
+        if (SceneManager.GetActiveScene().buildIndex != 1)
         {
-            StartCoroutine(LoadLevel());
+            playerController.SetUSCharges(PlayerPrefs.GetInt("Ultimate_Skill_Charges"));
+            playerController.SetUniqueSkill(PlayerPrefs.GetInt("Ultimate_Skill"));
+            playerController.SetSecondaryAttack(PlayerPrefs.GetInt("Secondary_Attack"));
         }
         else
         {
@@ -82,6 +88,7 @@ public class GameManager : MonoBehaviour
     private IEnumerator ChangeLevel() 
     {
         playerController.LockMovement();
+        audioManager.SaveTime();
         yield return new WaitForSeconds(timeToChangeLevel);
         SaveGame();
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
@@ -98,9 +105,7 @@ public class GameManager : MonoBehaviour
     private IEnumerator LoadLevel()
     {
         playerController.LockMovement();
-        playerController.SetUSCharges(PlayerPrefs.GetInt("Ultimate_Skill_Charges"));
-        playerController.SetUniqueSkill(PlayerPrefs.GetInt("Ultimate_Skill"));
-        playerController.SetSecondaryAttack(PlayerPrefs.GetInt("Secondary_Attack"));
+        
         yield return new WaitForSeconds(timeToLoadLevel);
         playerController.UnlockMovement();
     }
@@ -109,5 +114,15 @@ public class GameManager : MonoBehaviour
     {
         if (numberOfEnemies == 0) return true;
         else return false;
+    }
+
+    public void Explosion()
+    {
+        audioManager.PlayExplosion();
+    }
+
+    public void Parry()
+    {
+        audioManager.PlayParry();
     }
 }

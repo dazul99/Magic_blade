@@ -15,11 +15,9 @@ public class Projectile : MonoBehaviour
 
     private GameManager gameManager;
 
-
     private void Start()
     {
         gameManager = FindObjectOfType<GameManager>();
-
         rb = GetComponent<Rigidbody2D>();
         rb.AddForce(transform.up * speed);
         if (explodes)
@@ -76,6 +74,7 @@ public class Projectile : MonoBehaviour
 
     private IEnumerator Ekusupurosion()
     {
+        gameManager.Explosion();
         rb.velocity = Vector3.zero;
         explosion.SetActive(true);
         yield return new WaitForSeconds(explosionTime);
@@ -85,12 +84,14 @@ public class Projectile : MonoBehaviour
 
     private void ReturnPriv()
     {
+        gameManager.Parry();
         rb.velocity = Vector2.zero;
         rb.AddForce(transform.up * speed);
     }
 
     public void Return(Vector2 dir)
     {
+        gameManager.Parry();
         transform.rotation = Quaternion.LookRotation(new Vector3(0, 0, 1), new Vector3(dir.x, dir.y, 0));
         rb.velocity = Vector2.zero;
         rb.AddForce(transform.up * speed);

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -137,6 +138,7 @@ public class PlayerController : MonoBehaviour
     private bool paused = false;
     private bool locked = false;
 
+    private AudioManager audioManager;
 
 
     private void Awake()
@@ -161,9 +163,9 @@ public class PlayerController : MonoBehaviour
         dangerZoneCenter.transform.localScale = new Vector3(distanceOfSpecialDash, 1, 1);
         gameManager = FindObjectOfType<GameManager>();
         attackColl = attackHitObject.GetComponent<Collider2D>();
-        //uiManager = FindObjectOfType<UIManager>();
-        //uiManager.UpdateSecondAttack(maxUsesSecondaryATK);
+        audioManager = FindObjectOfType<AudioManager>();
         uiManager.GameStarted();
+        StartCoroutine(WalkingSounds());
     }
     // Update is called once per frame
     void Update()
@@ -293,6 +295,7 @@ public class PlayerController : MonoBehaviour
             }
             else if(door != null)
             {
+                
                 door.Open();
             }
         }
@@ -330,6 +333,7 @@ public class PlayerController : MonoBehaviour
 
     private void ChangingSkills()
     {
+        audioManager.PlayWorkspace();
         uiManager.ShowWorkStation();
         Time.timeScale = 0f;
         working = true;
@@ -343,6 +347,7 @@ public class PlayerController : MonoBehaviour
 
     private void KillEnemies()
     {
+        audioManager.PlayDeathEnemyLaser();
         foreach(RaycastHit2D enemy in enemiesToKill)
         {
             enemy.collider.gameObject.GetComponentInParent<AnimalEnemy>().Kill();
@@ -364,6 +369,7 @@ public class PlayerController : MonoBehaviour
         turqoiseSplashRenderer.SetPosition(1, turqoiseSplashHit.point);
         distanceOfTS = Mathf.Sqrt((Mathf.Abs(turqoiseSplashHit.point.x - transform.position.x) * Mathf.Abs(turqoiseSplashHit.point.x - transform.position.x)) + (Mathf.Abs(turqoiseSplashHit.point.y - transform.position.y) * Mathf.Abs(turqoiseSplashHit.point.y - transform.position.y)));
         shootingRay = true;
+        audioManager.PlayLaser();
         turqoiseSplashRenderer.enabled = true;
         yield return new WaitForSeconds(durationTS);
         shootingRay = false;
@@ -390,8 +396,8 @@ public class PlayerController : MonoBehaviour
 
     private void ExitDashMode()
     {
-        specialDashing = false;
-        //hasUsedSpecialDash = true; //CAMBIAR DESPUÉS
+        audioManager.PlayDash();
+        hasUsedSpecialDash = true;
         Time.timeScale = 1f;
         specialDashGO.SetActive(false);
         //rayo hacia el ratón
@@ -442,13 +448,27 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-
+        specialDashing = false;
         //mover el pj hasta el final del rayo o hasta la pared con la que choque
 
         transform.Translate(finalPos - aux);
 
     }
 
+    private IEnumerator WalkingSounds()
+    {
+        int aux = 1;
+        while (!dead)
+        {
+            if (aux == 4) aux = 1;
+            if(acc != 0)
+            {
+                audioManager.PlayStep(aux);
+                aux++;
+            }
+            yield return new WaitForSeconds(0.2f);
+        }
+    }
 
     private void Attack2(SecondaryATKs sA)
     {
@@ -684,6 +704,7 @@ public class PlayerController : MonoBehaviour
     {
         rigid.velocity = new Vector2(rigid.velocity.x, jump);
         touchingGround = false;
+        audioManager.PlayJump();
         float aux = 0;
         while (Input.GetKey(KeyCode.W) && aux < maxJump)
         {
@@ -734,7 +755,7 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator Attack1()
     {
-        
+        audioManager.PlaySwordAttack();
         float aux = acc;
         canAttack = false;
         attacking = true;
@@ -768,6 +789,7 @@ public class PlayerController : MonoBehaviour
         canUseScndry = false;
         Instantiate(icicleShotObject, transform.position + aux, Quaternion.LookRotation(transform.forward, dir));
         uiManager.UsedSecondAttack(IceShotCD);
+        audioManager.PlayCastIcicleShot();
     }
 
     private IEnumerator DefinitiveShield()
@@ -790,7 +812,7 @@ public class PlayerController : MonoBehaviour
         Vector3 aux = new Vector3(0, 0, 0);
         aux = dir;
         canUseScndry = false;
-
+        audioManager.PlayCastFireball();
         Instantiate(fire, transform.position + aux, Quaternion.LookRotation(transform.forward, dir));
         uiManager.UsedSecondAttack(fireCD);
 
@@ -814,11 +836,15 @@ public class PlayerController : MonoBehaviour
     
     public void SetDoor(Door d)
     {
+        if (d != null) uiManager.ShowInteractable();
+        else uiManager.HideInteractable();
         door = d;
     }
 
     public void SetWS(bool ws)
     {
+        if (ws) uiManager.ShowInteractable();
+        else uiManager.HideInteractable();
         onWorkStation = ws;
     }
 
@@ -870,10 +896,12 @@ public class PlayerController : MonoBehaviour
             dir.Normalize();
 
             rigid.AddForce(dir * 400);
-           aE.Knockback(-dir);
+            audioManager.PlaySwordClash();
+            aE.Knockback(-dir);
         }
         else if (shielding)
         {
+            audioManager.PlayParry();
             aE.Stun(stunTime);
         }
         else if (!dead)
@@ -892,92 +920,7 @@ public class PlayerController : MonoBehaviour
         }
         Die();
     }
-    /*
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        
-        if (collision.gameObject.CompareTag("Door")) door = collision.gameObject.GetComponent<Door>();
-        else if (collision.gameObject.CompareTag("WorkStation")) onWorkStation = true;
-        else if (collision.gameObject.CompareTag("Room"))
-        {
-            if (gameObject.CompareTag("Attack")) return;
-            currentRoom = collision.gameObject.GetComponent<Room>();
-        }
-        else if (collision.gameObject.CompareTag("Ladder"))
-        {
-            if (gameObject.CompareTag("Attack")) return;
-            Ladder ladderaux = collision.gameObject.GetComponent<Ladder>();
-            if (ladderaux != null)
-            {
-                currentLadder = ladderaux;
-            }
-            else if (collision.gameObject.GetComponent<LadderEnd>().GetTop())
-            {
-                ladderTop = true;
-                ladderBottom = false;
-            }
-            else
-            {
-                ladderTop = false;
-                ladderBottom = true;
-            }
-        }
 
-        else if (collision.gameObject.CompareTag("EnemyAttack"))
-        {
-            if (attacking)
-            {
-                Vector2 enemypos = collision.gameObject.transform.position;
-                Vector2 dir = new Vector2(transform.position.x - enemypos.x, transform.position.y - enemypos.y);
-                dir.Normalize();
-
-                rigid.AddForce(dir * 400);
-                collision.gameObject.GetComponentInParent<AnimalEnemy>().Knockback(-dir);
-            }
-            else if (shielding)
-            {
-                collision.gameObject.GetComponentInParent<AnimalEnemy>().Stun(stunTime);
-            }
-            else if (!dead)
-            {
-                Die();
-            }
-        }
-        else if (collision.gameObject.CompareTag("EnemyShot") && attacking)
-        {
-            Vector2 dir = Direction();
-            collision.gameObject.GetComponentInParent<Projectile>().Return(dir);
-        }
-    }
-
-    private void OnTriggerStay2D(Collider2D collision)
-    {
-        if (collision.gameObject.CompareTag("Explosion") && !gameObject.CompareTag("Attack"))
-        {
-            if (!shielding && !dead)
-            {
-                Die();
-            }
-        }
-    }
-
-    private void OnTriggerExit2D(Collider2D collision)
-    {
-        if (gameObject.CompareTag("Attack")) return;
-        if (collision.gameObject.CompareTag("Ladder") )
-        {
-            if (currentLadder != null && collision.GetComponent<Ladder>() == currentLadder && !climbing)
-            {
-                currentLadder = null;
-            }
-
-            ladderBottom = ladderTop = false;
-
-        }
-        else if (collision.gameObject.CompareTag("WorkStation")) onWorkStation = false;
-        else if (collision.gameObject.CompareTag("Door")) door = null;
-    }
-    */
     public void DiePublic()
     {
         if (!shielding && !dead)
@@ -988,6 +931,7 @@ public class PlayerController : MonoBehaviour
 
     private void Die()
     {
+        audioManager.PlayDeathPlayer();
         rigid.velocity = Vector2.zero;
         dead = true;
         StartCoroutine(GameOver());

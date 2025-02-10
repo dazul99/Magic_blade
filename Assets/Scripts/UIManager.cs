@@ -57,6 +57,8 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private Image[] scndryImages;
 
+    [SerializeField] private GameObject interactButton;
+
     private void Start()
     {
         playerController = FindObjectOfType<PlayerController>();
@@ -65,15 +67,27 @@ public class UIManager : MonoBehaviour
         foreach(Toggle toggle in uSTgls) {  toggle.isOn = false; }
 
         timeLeft.text = timeToEndStage.ToString();
-
+        interactButton.SetActive(false);
+        
     }
-    
+
+
     public void GameStarted()
     {
         bluePlanetPanel.SetActive(false);
         pausePanel.SetActive(false);
         gameOverPanel.SetActive(false);
         StartCoroutine(Countdown());
+    }
+
+    public void ShowInteractable()
+    {
+        interactButton.SetActive(true);
+    }
+
+    public void HideInteractable()
+    {
+        interactButton.SetActive(false);
     }
 
     private IEnumerator Countdown()
@@ -239,6 +253,11 @@ public class UIManager : MonoBehaviour
     {
         pausePanel.SetActive(false);
         playerController.ResumeGame();
+    }
+
+    public void GoToAudioPanel()
+    {
+        pausePanel.SetActive(false);
     }
 
     public void GoToMainMenu()
