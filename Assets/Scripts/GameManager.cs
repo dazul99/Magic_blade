@@ -23,6 +23,8 @@ public class GameManager : MonoBehaviour
 
     private AudioManager audioManager;
 
+    private CameraMovement cam;
+
     void Start()
     {
         audioManager = FindObjectOfType<AudioManager>();
@@ -40,6 +42,7 @@ public class GameManager : MonoBehaviour
             playerController.SetUniqueSkill(0);
             playerController.SetSecondaryAttack(0);
         }
+        cam = FindObjectOfType<CameraMovement>();
     }
 
     void Update()
@@ -124,5 +127,10 @@ public class GameManager : MonoBehaviour
     public void Parry()
     {
         audioManager.PlayParry();
+    }
+
+    public void BossStarted(Vector2 pos)
+    {
+        cam.LockIn(pos);
     }
 }

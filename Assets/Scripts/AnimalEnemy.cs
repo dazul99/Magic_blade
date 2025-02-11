@@ -473,46 +473,6 @@ public class AnimalEnemy : MonoBehaviour
             currentRoom = r;
         }
     }
-    /*
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (dead) return;
-        if (!gameObject.CompareTag("Enemy")) return;
-        if (collision.gameObject.CompareTag("InvisibleWall"))
-        {
-            rigid.velocity = new Vector2(0, rigid.velocity.y);
-            Vector2 aux = collision.transform.position - transform.position;
-            rigid.AddForce(aux * 100);
-        }
-
-        if (collision.gameObject.CompareTag("Attack"))
-        {
-            if (player.MeleeAttacking())
-            {
-                if (actuallyAttacking) return;
-                if (ItHits(collision)) Die();
-                else return;
-            }
-            else
-            {
-                Die();
-            }
-        }
-        else if (collision.gameObject.CompareTag("Explosion"))
-        {
-            if (ItHits(collision)) Die();
-            else return;
-        }
-        else if (collision.gameObject.CompareTag("Shot"))
-        {
-            Die();
-        }
-        else if (collision.gameObject.CompareTag("Room") && collision.gameObject.GetComponent<Room>() != currentRoom)
-        {
-            currentRoom = collision.gameObject.GetComponent<Room>();
-        }
-    }
-    */
 
     private bool ItHits(Collider2D collision)
     {

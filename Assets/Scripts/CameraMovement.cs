@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.UIElements;
 
 public class CameraMovement : MonoBehaviour
 {
@@ -18,6 +19,8 @@ public class CameraMovement : MonoBehaviour
     private float yMovement;
     private float playerX;
     private float playerY;
+
+    private bool moving;
 
     private void Awake()
     {
@@ -36,6 +39,7 @@ public class CameraMovement : MonoBehaviour
 
     private void Update()
     {
+        if (moving) return;
         playerX = player.transform.position.x;
         playerY = player.transform.position.y;
         xMovement = playerX - transform.position.x;
@@ -61,6 +65,15 @@ public class CameraMovement : MonoBehaviour
         }
 
         transform.Translate(new Vector3(xMovement * 3f , yMovement * 3, 0) * Time.deltaTime);
+    }
+
+    public void LockIn(Vector2 pos)
+    {
+        moving = true;
+        transform.position = new Vector3 (pos.x, pos.y, -10);
+        xBounds = new Vector2(pos.x + 10, pos.x - 10);
+        yBounds = new Vector2(pos.y + 10, pos.y);
+
     }
 
 }
