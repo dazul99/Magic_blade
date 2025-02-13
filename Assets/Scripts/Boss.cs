@@ -42,9 +42,11 @@ public class Boss : MonoBehaviour
     [SerializeField] private float stunnedTime = 3f;
 
     private Animator animator;
+    private SpriteRenderer spriteRenderer;
 
     private void Start()
     {
+        spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
         gameManager = FindObjectOfType<GameManager>();
         coll = collGO.GetComponent<Collider2D>();
@@ -57,6 +59,8 @@ public class Boss : MonoBehaviour
     private void Update()
     {
         if (dead || attacking || stunned || brokenPoise) return;
+
+        
         rigid.velocity = Vector2.zero;
 
         if (idleState)
@@ -153,7 +157,8 @@ public class Boss : MonoBehaviour
         coll.enabled = false;
         rigid.gravityScale = 1f;
         rigid.includeLayers = groundLayer;
-
+        spriteRenderer.flipY = true;
+        
         yield return new WaitForSeconds(4f);
         gameManager.BossDied();
         Destroy(gameObject);

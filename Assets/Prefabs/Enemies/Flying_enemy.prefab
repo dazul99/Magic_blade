@@ -96,6 +96,7 @@ GameObject:
   - component: {fileID: 1162450709314102681}
   - component: {fileID: 8286558827907112716}
   - component: {fileID: 949960990475547117}
+  - component: {fileID: -4874964271885777306}
   m_Layer: 10
   m_Name: Flying_enemy
   m_TagString: Enemy
@@ -111,15 +112,15 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4294926369335883935}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0.7071068, w: 0.7071068}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -17.35, y: -13.67, z: -0.29032093}
-  m_LocalScale: {x: 0.38336384, y: 0.38336378, z: 0.3833638}
+  m_LocalScale: {x: 7.2480907, y: 7.24809, z: 7.2480907}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 61109397935872451}
   - {fileID: 5055499652604900881}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -90}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1162450709314102681
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -161,8 +162,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 10
-  m_Sprite: {fileID: -9095717837082945937, guid: 207ee8102dd4143d288186ef0be518ee, type: 3}
-  m_Color: {r: 1, g: 0.1745283, b: 0.1745283, a: 1}
+  m_Sprite: {fileID: -1851924866, guid: f7c8fc8513d1c9749bdd25847fda84b0, type: 3}
+  m_Color: {r: 0.8679245, g: 0.61000353, b: 0.61000353, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -238,6 +239,27 @@ MonoBehaviour:
   ranged: 0
   projectile: {fileID: 0}
   vertical: 0
+--- !u!95 &-4874964271885777306
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4294926369335883935}
+  m_Enabled: 0
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: b135cc9083358564398897145f374ba0, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &6276947787213875345
 GameObject:
   m_ObjectHideFlags: 0
@@ -264,9 +286,9 @@ Transform:
   m_GameObject: {fileID: 6276947787213875345}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.04, y: 0.07, z: 0}
-  m_LocalScale: {x: 1.3971196, y: 1.7463995, z: 1.7463995}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0.009, y: -0.034, z: 0}
+  m_LocalScale: {x: 0.18592726, y: 0.23240909, z: 0.23240909}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6252889669450326517}
   m_Father: {fileID: 186260057153070423}
@@ -344,7 +366,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.13379, y: 0.13379, z: 0.13379}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 186260057153070423}

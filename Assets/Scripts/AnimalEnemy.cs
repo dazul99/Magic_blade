@@ -85,8 +85,13 @@ public class AnimalEnemy : MonoBehaviour
 
     private AudioManager audioManager;
 
+    private Animator animator;
+    private SpriteRenderer spriteRenderer;
+
     private void Start()
     {
+        animator = GetComponent<Animator>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
         gameManager = FindObjectOfType<GameManager>();
         coll = collGO.GetComponent<Collider2D>();
         rigid = GetComponent<Rigidbody2D>();
@@ -109,12 +114,21 @@ public class AnimalEnemy : MonoBehaviour
         }
         if (attacking) return;
         detecting = null;
-        if (rigid.velocity.x > 0 && lookingRight) lookingRight = false;
-        else if (rigid.velocity.x < 0 && !lookingRight) lookingRight = true;
+        if (rigid.velocity.x > 0 && lookingRight)
+        {
+            lookingRight = false;
+            spriteRenderer.flipX = false;
+        }
+        else if (rigid.velocity.x < 0 && !lookingRight)
+        {
+            lookingRight = true;
+            spriteRenderer.flipX = false;
+
+        }
 
         if (!dead)
         {
-
+            animator.SetFloat("Speed", rigid.velocity.x);
             if (idleState)
             {
                 if (ranged)
@@ -241,6 +255,8 @@ public class AnimalEnemy : MonoBehaviour
                 }
                 aux = 0f;
                 lookingRight = !lookingRight;
+                spriteRenderer.flipX = !spriteRenderer.flipX;
+
             }
         }
         notEnterAgain = false;
@@ -249,15 +265,17 @@ public class AnimalEnemy : MonoBehaviour
 
     private IEnumerator MeleeAttack()
     {
+        animator.SetBool("Attacking", true);
         Vector2 cPos;
         Vector2 pos;
         cPos = new(player.transform.position.x, player.transform.position.y);
         pos = new(transform.position.x, transform.position.y);
         audioManager.PlaySwordAttack();
+
         yield return new WaitForSeconds(attackDelay);
+
         attackHitObject.transform.right = cPos - pos;
         Vector2 dir = cPos - pos;
-        
         dir.Normalize();
         if (dead) yield break;
         actuallyAttacking = true;
@@ -266,12 +284,15 @@ public class AnimalEnemy : MonoBehaviour
         attackObject.SetActive(true);
 
         yield return new WaitForSeconds(attackTime);
+
+        animator.SetBool("Attacking", false);
         attackHitObject.transform.right = Vector2.right;
         actuallyAttacking = false;
         attackColl.enabled = false;
         attackObject.SetActive(false);
         
         yield return new WaitForSeconds(attackCD);
+        
         attacking = false;
     }
 
@@ -514,7 +535,8 @@ public class AnimalEnemy : MonoBehaviour
         coll.enabled = false;
         rigid.gravityScale = 1f;
         rigid.includeLayers = groundLayer;
-
+        spriteRenderer.flipY = true;
+        animator.SetBool("Dead", true);
         yield return new WaitForSeconds(4f);
         Destroy(gameObject);
     }
