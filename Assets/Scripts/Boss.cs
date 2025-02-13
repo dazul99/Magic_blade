@@ -22,28 +22,30 @@ public class Boss : MonoBehaviour
 
     private PlayerController player;
 
-    private RaycastHit2D attackHits;
     [SerializeField] private LayerMask groundLayer;
 
 
-    private bool canDeflect = true;
     [SerializeField] private LayerMask projectileLayer;
 
     [SerializeField] private bool vertical = false;
 
     private AudioManager audioManager;
 
-    [SerializeField] private float attackCD = 1f;
+    [SerializeField] private float attackCD = 1.5f;
     [SerializeField] private GameObject projectile;
 
     private int lives = 3;
-    [SerializeField] private GameObject crystalGO;
-    private bool attacking;
-    private bool stunned;
+    private bool attacking = false;
+    private bool brokenPoise = false;
+    private bool stunned = false;
 
+    [SerializeField] private float stunnedTime = 3f;
+
+    private Animator animator;
 
     private void Start()
     {
+        animator = GetComponent<Animator>();
         gameManager = FindObjectOfType<GameManager>();
         coll = collGO.GetComponent<Collider2D>();
         rigid = GetComponent<Rigidbody2D>();
@@ -54,7 +56,7 @@ public class Boss : MonoBehaviour
 
     private void Update()
     {
-        if (dead || attacking || stunned) return;
+        if (dead || attacking || stunned || brokenPoise) return;
         rigid.velocity = Vector2.zero;
 
         if (idleState)
@@ -67,6 +69,7 @@ public class Boss : MonoBehaviour
         }
         else
         {
+            
             StartCoroutine(BossAttack());
         }
     }
@@ -82,6 +85,7 @@ public class Boss : MonoBehaviour
 
     private IEnumerator BossAttack()
     {
+        
         attacking = true;
         Vector2 cPos;
         Vector2 pos;
@@ -98,20 +102,40 @@ public class Boss : MonoBehaviour
 
         Instantiate(projectile, transform.position + new Vector3(dir.x, dir.y, 0), Quaternion.LookRotation(transform.forward, dir));
 
-
+        animator.SetBool("Attacked", true);
         yield return new WaitForSeconds(attackCD);
+
         attacking = false;
     }
 
-    public void CrystalBreak()
+    public IEnumerator GotShot()
     {
-        lives--;
-        if (lives == 0) stunned = true;
+        stunned = true;
+        animator.SetBool("Stunned", true);
+        yield return new WaitForSeconds(stunnedTime);
+        animator.SetBool("Stunned", false);
+        stunned = false;
     }
 
     public bool GetStunned()
     {
         return stunned;
+    }
+
+    public void CrystalBreak()
+    {
+        Debug.Log(lives);
+        lives--;
+        if (lives == 0)
+        {
+            animator.SetBool("Poised", true);
+            brokenPoise = true;
+        }
+    }
+
+    public bool GetPoise()
+    {
+        return brokenPoise;
     }
 
     public void GotKilled()
@@ -131,6 +155,8 @@ public class Boss : MonoBehaviour
         rigid.includeLayers = groundLayer;
 
         yield return new WaitForSeconds(4f);
+        gameManager.BossDied();
         Destroy(gameObject);
     }
+
 }

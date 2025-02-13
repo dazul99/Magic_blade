@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -59,6 +60,8 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private GameObject interactButton;
 
+    [SerializeField] private GameObject demoPanel;
+
     private void Start()
     {
         playerController = FindObjectOfType<PlayerController>();
@@ -68,7 +71,7 @@ public class UIManager : MonoBehaviour
 
         timeLeft.text = timeToEndStage.ToString();
         interactButton.SetActive(false);
-        
+        if(demoPanel != null) demoPanel.SetActive(false);
     }
 
 
@@ -275,6 +278,11 @@ public class UIManager : MonoBehaviour
     public void GameOver()
     {
         gameOverPanel.SetActive(true);
+    }
+
+    public void DemoFinished()
+    {
+        demoPanel.SetActive(true);
     }
 
 }

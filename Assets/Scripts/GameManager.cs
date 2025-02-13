@@ -22,11 +22,14 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Collider2D endOfLevel;
 
     private AudioManager audioManager;
-
+    private UIManager uiManager;
     private CameraMovement cam;
+
+    [SerializeField] private GameObject invWallBossRoom;
 
     void Start()
     {
+        uiManager = FindObjectOfType<UIManager>();
         audioManager = FindObjectOfType<AudioManager>();
         playerController = FindObjectOfType<PlayerController>();
         numberOfEnemies = FindObjectsOfType<AnimalEnemy>().Length;
@@ -43,6 +46,9 @@ public class GameManager : MonoBehaviour
             playerController.SetSecondaryAttack(0);
         }
         cam = FindObjectOfType<CameraMovement>();
+
+        if(invWallBossRoom != null) invWallBossRoom.SetActive(false);
+
     }
 
     void Update()
@@ -132,5 +138,13 @@ public class GameManager : MonoBehaviour
     public void BossStarted(Vector2 pos)
     {
         cam.LockIn(pos);
+        invWallBossRoom.SetActive(true);
     }
+
+    public void BossDied()
+    {
+        uiManager.DemoFinished();
+    }
+
+
 }

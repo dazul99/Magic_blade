@@ -18,6 +18,7 @@ TagManager:
   - WorkStation
   - InvisibleWall
   - EndOfLevel
+  - Crystal
   layers:
   - Default
   - TransparentFX

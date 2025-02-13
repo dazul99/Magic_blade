@@ -413,6 +413,11 @@ public class PlayerController : MonoBehaviour
                 rayh.collider.gameObject.GetComponentInParent<AnimalEnemy>().Kill();
 
             }
+            else if (rayh.collider.gameObject.CompareTag("Crystal"))
+            {
+                rayh.collider.gameObject.GetComponentInParent<Crystal>().Break();
+
+            }
             else if (rayh.collider.gameObject.CompareTag("Wall") || rayh.collider.gameObject.CompareTag("Door"))
             {
                 finalPos = rayh.point;
@@ -931,6 +936,7 @@ public class PlayerController : MonoBehaviour
 
     private void Die()
     {
+        
         audioManager.PlayDeathPlayer();
         rigid.velocity = Vector2.zero;
         dead = true;

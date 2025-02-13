@@ -22,6 +22,10 @@ public class CameraMovement : MonoBehaviour
 
     private bool moving;
 
+    private float normalSize = 8f;
+    private float bossSize = 13f;
+    private Vector3 bossPos = new Vector3(8.7f, 2.89f, -10);
+
     private void Awake()
     {
 
@@ -69,8 +73,9 @@ public class CameraMovement : MonoBehaviour
 
     public void LockIn(Vector2 pos)
     {
+        gameObject.GetComponent<Camera>().orthographicSize = bossSize;
         moving = true;
-        transform.position = new Vector3 (pos.x, pos.y, -10);
+        transform.localPosition = bossPos;
         xBounds = new Vector2(pos.x + 10, pos.x - 10);
         yBounds = new Vector2(pos.y + 10, pos.y);
 
