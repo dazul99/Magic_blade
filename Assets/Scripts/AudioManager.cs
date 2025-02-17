@@ -10,6 +10,7 @@ public class AudioManager : MonoBehaviour
 
     [SerializeField] private AudioSource miscSource1;
     [SerializeField] private AudioSource miscSource2;
+    [SerializeField] private AudioSource footsepsSource;
 
     [SerializeField] private AudioClip swordAttack;
     [SerializeField] private AudioClip swordClash;
@@ -29,6 +30,9 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip workspace;
     [SerializeField] private AudioClip jump;
     [SerializeField] private AudioClip dash;
+    [SerializeField] private AudioClip bossDeath;
+    [SerializeField] private AudioClip bossHurt;
+    [SerializeField] private AudioClip crystalBreak;
 
 
     private float masterVolume;
@@ -310,43 +314,28 @@ public class AudioManager : MonoBehaviour
 
     private void PlayStep1()
     {
-        if (!miscSource1.isPlaying)
+        if (!footsepsSource.isPlaying)
         {
-            miscSource1.clip = step1;
-            miscSource1.Play();
-        }
-        else
-        {
-            miscSource2.clip = step1;
-            miscSource2.Play();
+            footsepsSource.clip = step1;
+            footsepsSource.Play();
         }
     }
 
     private void PlayStep2()
     {
-        if (!miscSource1.isPlaying)
+        if (!footsepsSource.isPlaying)
         {
-            miscSource1.clip = step2;
-            miscSource1.Play();
-        }
-        else
-        {
-            miscSource2.clip = step2;
-            miscSource2.Play();
+            footsepsSource.clip = step2;
+            footsepsSource.Play();
         }
     }
 
     private void PlayStep3()
     {
-        if (!miscSource1.isPlaying)
+        if (!footsepsSource.isPlaying)
         {
-            miscSource1.clip = step3;
-            miscSource1.Play();
-        }
-        else
-        {
-            miscSource2.clip = step3;
-            miscSource2.Play();
+            footsepsSource.clip = step3;
+            footsepsSource.Play();
         }
     }
 
@@ -391,6 +380,48 @@ public class AudioManager : MonoBehaviour
             miscSource2.Play();
         }
     }
+    public void PlayBossDeath()
+    {
+        if (!miscSource1.isPlaying)
+        {
+            miscSource1.clip = bossDeath;
+            miscSource1.Play();
+        }
+        else
+        {
+            miscSource2.clip = bossDeath;
+            miscSource2.Play();
+        }
+    }
+
+    public void PlayBossHurt()
+    {
+        if (!miscSource1.isPlaying)
+        {
+            miscSource1.clip = bossHurt;
+            miscSource1.Play();
+        }
+        else
+        {
+            miscSource2.clip = bossHurt;
+            miscSource2.Play();
+        }
+    }
+
+    public void PlayCrystalBreak()
+    {
+        if (!miscSource1.isPlaying)
+        {
+            miscSource1.clip = crystalBreak;
+            miscSource1.Play();
+        }
+        else
+        {
+            miscSource2.clip = crystalBreak;
+            miscSource2.Play();
+        }
+    }
 
 
-}
+
+    }

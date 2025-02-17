@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.VisualScripting;
+using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static Unity.Burst.Intrinsics.X86;
@@ -26,7 +27,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject collGO;
     private CapsuleCollider2D coll;
     private GameManager gameManager;
-    private SpriteRenderer spriteRenderer;
+    [SerializeField]private SpriteRenderer spriteRenderer;
 
     [SerializeField] private PhysicsMaterial2D material;
 
@@ -57,17 +58,12 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private float speed = 10f;
     [SerializeField] private float jump = 10f;
-    [SerializeField] private float dash = 10f;
     [SerializeField] private float ddelta;
 
     [SerializeField] private LayerMask groundLayer;
 
     [SerializeField] private float height = (float)1.03;
     [SerializeField] private float width = 0.5f;
-    private bool canDash = true;
-    private bool dashing = false;
-    private float dashCD = 0.5f;
-    private float dashTime = 0.2f;
     private float horiz;
     private float acc = 0;
 
@@ -139,7 +135,12 @@ public class PlayerController : MonoBehaviour
     private bool locked = false;
 
     private AudioManager audioManager;
+    [SerializeField] private float wallRaycastLeft;
+    [SerializeField] private float wallRaycastRight;
+    [SerializeField] private float groundRaycastLeft;
+    [SerializeField] private float groundRaycastRight;
 
+    [SerializeField] private Animator animator;
 
     private void Awake()
     {
@@ -152,7 +153,7 @@ public class PlayerController : MonoBehaviour
         rigid = GetComponent<Rigidbody2D>();
         coll = collGO.GetComponent<CapsuleCollider2D>();
         
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        
     }
 
     private void Start()
@@ -160,7 +161,7 @@ public class PlayerController : MonoBehaviour
         specialDashGO.transform.localScale = new Vector2(distanceOfSpecialDash * 2, distanceOfSpecialDash * 2);
         specialDashGO.SetActive(false);
         specialDashDangerZone.SetActive(false);
-        dangerZoneCenter.transform.localScale = new Vector3(distanceOfSpecialDash, 1, 1);
+        dangerZoneCenter.transform.localScale = new Vector3(distanceOfSpecialDash, 0.25f, 0.25f);
         gameManager = FindObjectOfType<GameManager>();
         attackColl = attackHitObject.GetComponent<Collider2D>();
         audioManager = FindObjectOfType<AudioManager>();
@@ -174,13 +175,17 @@ public class PlayerController : MonoBehaviour
 
         if (dead) return;
 
+        animator.SetFloat("YSpeed", rigid.velocity.y);
+        animator.SetFloat("XSpeed", Mathf.Abs(rigid.velocity.x));
+
+
         CheckGround();
 
         CheckWalls();
 
 
 
-        if (dashing || attacking || climbing || shielding|| working || paused)
+        if (attacking || climbing || shielding|| working || paused)
         {
             return;
         }
@@ -400,10 +405,8 @@ public class PlayerController : MonoBehaviour
         hasUsedSpecialDash = true;
         Time.timeScale = 1f;
         specialDashGO.SetActive(false);
-        //rayo hacia el ratón
         Vector2 dir = Direction();
-        dashHits = Physics2D.RaycastAll(transform.position, dir, distanceOfSpecialDash);
-        //matar enemigos que toquen el rayo
+        dashHits = Physics2D.RaycastAll(transform.position, dir, distanceOfSpecialDash * 4);
         Vector2 finalPos = new Vector3(-1000, -1000, -1000);
 
         foreach(RaycastHit2D rayh in dashHits)
@@ -433,9 +436,9 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (finalPos == new Vector2(-1000, -1000)) finalPos = transform.position + (new Vector3(dir.x,dir.y,0) * distanceOfSpecialDash);
+        if (finalPos == new Vector2(-1000, -1000)) finalPos = transform.position + (new Vector3(dir.x,dir.y,0) * distanceOfSpecialDash * 4);
         Vector2 aux = new Vector2(transform.position.x, transform.position.y);
-        dashHits = Physics2D.RaycastAll(transform.position - new Vector3(0,1,0), dir, distanceOfSpecialDash);
+        dashHits = Physics2D.RaycastAll(transform.position - new Vector3(0,1,0), dir, distanceOfSpecialDash * 4);
         foreach (RaycastHit2D rayh in dashHits)
         {
             if (rayh.collider.gameObject.CompareTag("Enemy"))
@@ -471,7 +474,7 @@ public class PlayerController : MonoBehaviour
                 audioManager.PlayStep(aux);
                 aux++;
             }
-            yield return new WaitForSeconds(0.2f);
+            yield return new WaitForSeconds(0.4f);
         }
     }
 
@@ -521,7 +524,7 @@ public class PlayerController : MonoBehaviour
             aux = Vector2.left + Vector2.up;
             jumpedRight = true;
         }
-
+        audioManager.PlayJump();
         aux.Normalize();
         rigid.velocity = Vector2.zero;
         rigid.AddForce(aux * 700);
@@ -554,14 +557,14 @@ public class PlayerController : MonoBehaviour
         }
 
         float dist = 0.05f + ddelta;
-        Debug.DrawRay(transform.position - new Vector3((float)0.25, 1, 0), Vector3.down * ddelta);
-        Debug.DrawRay(transform.position + new Vector3((float)0.25, -1, 0), Vector3.down * ddelta);
-        groundHits = Physics2D.Raycast(transform.position - new Vector3((float)0.25, 1, 0), Vector2.down, dist, groundLayer);
+        Debug.DrawRay(transform.position - new Vector3(groundRaycastLeft, 0.99f, 0), Vector3.down * ddelta);
+        Debug.DrawRay(transform.position + new Vector3(groundRaycastRight, -0.99f, 0), Vector3.down * ddelta);
+        groundHits = Physics2D.Raycast(transform.position - new Vector3(groundRaycastLeft, 1, 0), Vector2.down, dist, groundLayer);
         touchingGround = groundHits.collider != null;
         if (touchingGround && groundHits.collider.gameObject.CompareTag("ThroughFloor") && (Mathf.Abs(rigid.velocity.y) > 0.01f)) touchingGround = false;
         if (!touchingGround)
         {
-            groundHits = Physics2D.Raycast(transform.position + new Vector3((float)0.25, -1, 0), Vector2.down, dist, groundLayer);
+            groundHits = Physics2D.Raycast(transform.position + new Vector3(groundRaycastRight, -1, 0), Vector2.down, dist, groundLayer);
             touchingGround = groundHits.collider != null;
             if (touchingGround && groundHits.collider.gameObject.CompareTag("ThroughFloor") && (Mathf.Abs(rigid.velocity.y) > 0.01f)) touchingGround = false;
         }
@@ -577,25 +580,25 @@ public class PlayerController : MonoBehaviour
     {
         float dist =  0.07f + ddelta;
 
-        Debug.DrawRay(transform.position - new Vector3((float)0.5f, 0, 0), Vector3.left * ddelta);
-        Debug.DrawRay(transform.position - new Vector3((float)-0.5f, 0, 0), Vector3.right * ddelta);
-        Debug.DrawRay(transform.position - new Vector3((float)-0.5f, 0.95f, 0), Vector3.right * ddelta);
-        wallHits = Physics2D.Raycast(transform.position - new Vector3((float)0.5f, 0, 0), Vector2.left, dist, groundLayer);
+        Debug.DrawRay(transform.position - new Vector3(wallRaycastLeft, 0, 0), Vector3.left * ddelta);
+        Debug.DrawRay(transform.position - new Vector3(wallRaycastRight, 0, 0), Vector3.right * ddelta);
+        Debug.DrawRay(transform.position - new Vector3(wallRaycastRight, 0.95f, 0), Vector3.right * ddelta);
+        wallHits = Physics2D.Raycast(transform.position - new Vector3(wallRaycastLeft, 0, 0), Vector2.left, dist, groundLayer);
         wallLeft = wallHits.collider != null && wallHits.collider.gameObject.CompareTag("Wall");
         if (!wallLeft)
         {
-            wallHits = Physics2D.Raycast(transform.position - new Vector3((float)0.5f, -0.95f, 0), Vector2.left, dist, groundLayer);
+            wallHits = Physics2D.Raycast(transform.position - new Vector3(wallRaycastLeft, -0.95f, 0), Vector2.left, dist, groundLayer);
             wallLeft = wallHits.collider != null && wallHits.collider.gameObject.CompareTag("Wall");
         }
 
         if (!wallLeft)
         {
             
-            wallHits = Physics2D.Raycast(transform.position - new Vector3((float)-0.5f, 0, 0), Vector2.right, dist, groundLayer);
+            wallHits = Physics2D.Raycast(transform.position - new Vector3(wallRaycastRight, 0, 0), Vector2.right, dist, groundLayer);
             wallRight = wallHits.collider != null && wallHits.collider.gameObject.CompareTag("Wall");
             if (!wallRight)
             {
-                 wallHits = Physics2D.Raycast(transform.position - new Vector3((float)-0.5f, 0.95f, 0), Vector2.right, dist, groundLayer);
+                 wallHits = Physics2D.Raycast(transform.position - new Vector3(wallRaycastRight, 0.95f, 0), Vector2.right, dist, groundLayer);
                  wallRight = wallHits.collider != null && wallHits.collider.gameObject.CompareTag("Wall");
 
             }
@@ -645,14 +648,15 @@ public class PlayerController : MonoBehaviour
         {
             
             horiz = -1;
-            if (Input.GetKey(KeyCode.S) && touchingGround)
-            {
-                if(canDash) StartCoroutine(Dash());
-                return;
-            }
             if (!spriteRenderer.flipX)
             {
                 spriteRenderer.flipX = true;
+                coll.transform.localScale = new Vector3 (-1,1,1);
+                wallRaycastLeft += 0.26f;
+                wallRaycastRight += 0.26f;
+                groundRaycastLeft += 0.45f;
+                groundRaycastRight -= 0.45f;
+
                 acc = 0;
             }
             if (acc <= 1) acc += 0.03f;
@@ -662,14 +666,14 @@ public class PlayerController : MonoBehaviour
         {
             
             horiz = 1;
-            if (Input.GetKey(KeyCode.S) && touchingGround)
-            {
-                if (canDash) StartCoroutine(Dash());
-                return;
-            }
             if (spriteRenderer.flipX)
             {
                 spriteRenderer.flipX = false;
+                coll.transform.localScale = Vector3.one;
+                wallRaycastLeft -= 0.26f;
+                wallRaycastRight -= 0.26f;
+                groundRaycastLeft -= 0.45f;
+                groundRaycastRight += 0.45f;
                 acc = 0;
             }
             if (acc <= 1) acc += 0.03f;
@@ -689,22 +693,6 @@ public class PlayerController : MonoBehaviour
     }
 
 
-    private IEnumerator Dash()
-    {
-        canDash = false;
-        dashing = true;
-        float aux = rigid.gravityScale;
-        rigid.gravityScale = 0;
-
-        rigid.velocity = new Vector2(horiz * dash, 0f);
-        yield return new WaitForSeconds(dashTime);
-        rigid.velocity = new Vector2(0f, 0f);
-        rigid.gravityScale = aux;
-        dashing = false;
-        acc = 0;
-        yield return new WaitForSeconds(dashCD);
-        canDash = true;
-    }
     private IEnumerator Jump()
     {
         rigid.velocity = new Vector2(rigid.velocity.x, jump);
@@ -760,6 +748,8 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator Attack1()
     {
+        animator.SetBool("Attacked", true);
+
         audioManager.PlaySwordAttack();
         float aux = acc;
         canAttack = false;
@@ -912,6 +902,7 @@ public class PlayerController : MonoBehaviour
         else if (!dead)
         {
             Die();
+            
         }
     }
 
@@ -936,7 +927,7 @@ public class PlayerController : MonoBehaviour
 
     private void Die()
     {
-        
+        animator.SetBool("Died", true);
         audioManager.PlayDeathPlayer();
         rigid.velocity = Vector2.zero;
         dead = true;
@@ -1021,10 +1012,6 @@ public class PlayerController : MonoBehaviour
         uiManager.GameOver();
     }
 
-    public bool IsDashing()
-    {
-        return dashing;
-    }
 
     public void LockMovement()
     {

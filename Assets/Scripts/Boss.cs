@@ -114,6 +114,7 @@ public class Boss : MonoBehaviour
 
     public IEnumerator GotShot()
     {
+        audioManager.PlayBossHurt();
         stunned = true;
         animator.SetBool("Stunned", true);
         yield return new WaitForSeconds(stunnedTime);
@@ -149,6 +150,7 @@ public class Boss : MonoBehaviour
 
     private IEnumerator Die()
     {
+        audioManager.PlayBossDeath();
         rigid.velocity = Vector2.zero;
         rigid.inertia = 0f;
         dead = true;

@@ -5,9 +5,11 @@ using UnityEngine;
 public class Crystal : MonoBehaviour
 {
     private Boss parent;
+    private AudioManager manager;
 
     private void Start()
     {
+        manager = FindObjectOfType<AudioManager>();
         parent = GetComponentInParent<Boss>();
     }
 
@@ -18,6 +20,7 @@ public class Crystal : MonoBehaviour
 
     public void Break()
     {
+        manager.PlayCrystalBreak();
         parent.CrystalBreak();
         Destroy(gameObject);
     }

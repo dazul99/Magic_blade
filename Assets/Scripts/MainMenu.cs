@@ -11,6 +11,7 @@ public class MainMenu : MonoBehaviour
 
     [SerializeField] private Button continueButton;
     [SerializeField] private GameObject panel;
+    [SerializeField] private GameObject controlsPanel;
 
     private void Start()
     {
@@ -18,6 +19,17 @@ public class MainMenu : MonoBehaviour
         if (currentLevel == 0) continueButton.interactable = false;
         panel.SetActive(true);
         if(PlayerPrefs.HasKey("MainMenuTime")) PlayerPrefs.DeleteKey("MainMenuTime"); 
+        controlsPanel.SetActive(false);
+    }
+
+    public void ShowControls()
+    {
+        controlsPanel.SetActive(true);
+    }
+
+    public void HideControls()
+    {
+        controlsPanel.SetActive(false);
     }
 
     public void GoToGameScene()

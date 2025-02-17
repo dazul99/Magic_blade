@@ -23,14 +23,14 @@ public class CollisionDetection : MonoBehaviour
             if (collision.gameObject.GetComponent<Ladder>() != null) playerController.SetLadder(collision.gameObject.GetComponent<Ladder>());
             else playerController.SetLadderEnd(collision.gameObject.GetComponent<LadderEnd>());
         }
-        else if (collision.gameObject.CompareTag("EnemyAttack") && !playerController.IsDashing()) playerController.GotHit(collision.gameObject.GetComponentInParent<AnimalEnemy>());
-        else if (collision.gameObject.CompareTag("EnemyShot") && !playerController.IsDashing()) playerController.GotShot(collision.gameObject.GetComponentInParent<Projectile>());
+        else if (collision.gameObject.CompareTag("EnemyAttack")) playerController.GotHit(collision.gameObject.GetComponentInParent<AnimalEnemy>());
+        else if (collision.gameObject.CompareTag("EnemyShot")) playerController.GotShot(collision.gameObject.GetComponentInParent<Projectile>());
         else if (collision.gameObject.CompareTag("EndOfLevel")) playerController.EnteredEndOfLevel();
     }
 
     private void OnTriggerStay2D(Collider2D collision)
     {
-        if (collision.gameObject.CompareTag("Explosion") && !gameObject.CompareTag("Attack") && !playerController.IsDashing())
+        if (collision.gameObject.CompareTag("Explosion") && !gameObject.CompareTag("Attack"))
         {
             playerController.DiePublic();
         }

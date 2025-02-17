@@ -61,6 +61,10 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject interactButton;
 
     [SerializeField] private GameObject demoPanel;
+    
+    [SerializeField] private GameObject controlsPanel;
+
+    [SerializeField] private GameObject gamePanel;
 
     private void Start()
     {
@@ -72,6 +76,8 @@ public class UIManager : MonoBehaviour
         timeLeft.text = timeToEndStage.ToString();
         interactButton.SetActive(false);
         if(demoPanel != null) demoPanel.SetActive(false);
+        controlsPanel.SetActive(false);
+        gamePanel.SetActive(true);
     }
 
 
@@ -81,6 +87,29 @@ public class UIManager : MonoBehaviour
         pausePanel.SetActive(false);
         gameOverPanel.SetActive(false);
         StartCoroutine(Countdown());
+    }
+
+    public void ShowControls()
+    {
+        controlsPanel.SetActive(true);
+        pausePanel.SetActive(false);
+        gamePanel.SetActive(false);
+    }
+
+    public void HideControls()
+    {
+        controlsPanel.SetActive(false);
+        pausePanel.SetActive(true);
+        gamePanel.SetActive(true);
+    }
+
+    private void ShowGamePanel()
+    {
+        gamePanel.SetActive(true);
+    }
+    private void HideGamePanel()
+    {
+        gamePanel.SetActive(false);
     }
 
     public void ShowInteractable()

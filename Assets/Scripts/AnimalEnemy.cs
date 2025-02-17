@@ -90,17 +90,19 @@ public class AnimalEnemy : MonoBehaviour
 
     private void Start()
     {
+        if(!ranged) transform.rotation = Quaternion.Euler(0,0,0);
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         gameManager = FindObjectOfType<GameManager>();
         coll = collGO.GetComponent<Collider2D>();
         rigid = GetComponent<Rigidbody2D>();
-        attackColl = attackHitObject.GetComponent<Collider2D>();
+        if(attackHitObject != null) attackColl = attackHitObject.GetComponent<Collider2D>();
         player = FindObjectOfType<PlayerController>();
         originalPos = transform.position;
         if(ranged) StartCoroutine(MovementRanged());
         audioManager = FindObjectOfType<AudioManager>();
-
+        if (lookingRight) spriteRenderer.flipX = true;
+        else spriteRenderer.flipX = false;
     }
 
     private void Update()
@@ -125,10 +127,11 @@ public class AnimalEnemy : MonoBehaviour
             spriteRenderer.flipX = false;
 
         }
+        animator.SetFloat("Speed", Mathf.Abs(rigid.velocity.x) + Mathf.Abs(rigid.velocity.y));
 
         if (!dead)
         {
-            animator.SetFloat("Speed", rigid.velocity.x);
+            
             if (idleState)
             {
                 if (ranged)
@@ -255,7 +258,8 @@ public class AnimalEnemy : MonoBehaviour
                 }
                 aux = 0f;
                 lookingRight = !lookingRight;
-                spriteRenderer.flipX = !spriteRenderer.flipX;
+                if (lookingRight) spriteRenderer.flipX = false;
+                else spriteRenderer.flipX = true;
 
             }
         }

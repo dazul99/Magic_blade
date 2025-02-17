@@ -144,6 +144,7 @@ public class GameManager : MonoBehaviour
     public void BossDied()
     {
         uiManager.DemoFinished();
+        Time.timeScale = 0f;
     }
 
 
