@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerAnimations : MonoBehaviour
 {
     private Animator animator;
+    [SerializeField] private Animator slashAnimator;
     private SpriteRenderer sr;
 
     private void Awake()
@@ -20,10 +21,7 @@ public class PlayerAnimations : MonoBehaviour
     public void Attacked()
     {
         animator.SetBool("Attacked", false);
+        slashAnimator.SetBool("Attacked", false);
+
     }
-    /*
-    public void CheckFlip()
-    {
-        if (sr.flipX) transform.position = -transform.position;
-    }*/
 }

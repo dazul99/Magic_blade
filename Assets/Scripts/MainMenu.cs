@@ -12,6 +12,7 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private Button continueButton;
     [SerializeField] private GameObject panel;
     [SerializeField] private GameObject controlsPanel;
+    [SerializeField] private GameObject creditsPanel;
 
     private void Start()
     {
@@ -20,6 +21,7 @@ public class MainMenu : MonoBehaviour
         panel.SetActive(true);
         if(PlayerPrefs.HasKey("MainMenuTime")) PlayerPrefs.DeleteKey("MainMenuTime"); 
         controlsPanel.SetActive(false);
+        creditsPanel.SetActive(false);
     }
 
     public void ShowControls()
@@ -58,4 +60,13 @@ public class MainMenu : MonoBehaviour
         panel.SetActive(false);
     }
 
+    public void ShowCredits()
+    {
+        creditsPanel.SetActive(true);
+    }
+
+    public void HideCredits()
+    {
+        creditsPanel.SetActive(false);
+    }
 }

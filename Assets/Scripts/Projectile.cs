@@ -11,9 +11,11 @@ public class Projectile : MonoBehaviour
 
     [SerializeField] private GameObject explosion;
 
-    [SerializeField] private float explosionTime = 0.75f;
+    [SerializeField] private float explosionTime = 0.9f;
 
     private GameManager gameManager;
+
+    [SerializeField] private Animator explosionAnimator;
 
     private void Start()
     {
@@ -74,6 +76,7 @@ public class Projectile : MonoBehaviour
 
     private IEnumerator Ekusupurosion()
     {
+        explosionAnimator.SetBool("Exploded", true);
         gameManager.Explosion();
         rb.velocity = Vector3.zero;
         explosion.SetActive(true);

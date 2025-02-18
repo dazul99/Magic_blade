@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.VisualScripting;
-using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using static Unity.Burst.Intrinsics.X86;
@@ -141,7 +140,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float groundRaycastRight;
 
     [SerializeField] private Animator animator;
-
+    [SerializeField] private Animator slashAnimator;
     private void Awake()
     {
         maxUses = new int[3];
@@ -749,7 +748,7 @@ public class PlayerController : MonoBehaviour
     private IEnumerator Attack1()
     {
         animator.SetBool("Attacked", true);
-
+        
         audioManager.PlaySwordAttack();
         float aux = acc;
         canAttack = false;
@@ -760,6 +759,7 @@ public class PlayerController : MonoBehaviour
         attackHitObject.transform.right =dir;
         attackColl.enabled = true;
         attackObject.SetActive(true);
+        slashAnimator.SetBool("Attacked", true);
         rigid.velocity = new Vector2(rigid.velocity.x/2,rigid.velocity.y/2);  
         rigid.AddForce(dir * attackMove);
 
@@ -793,9 +793,9 @@ public class PlayerController : MonoBehaviour
         canUseScndry = false;
         rigid.velocity = Vector3.zero;
         acc = 0f;
-        gameObject.GetComponent<SpriteRenderer>().color = Color.blue;
+        spriteRenderer.color = Color.blue;
         yield return new WaitForSeconds(shieldDuration);
-        gameObject.GetComponent<SpriteRenderer>().color = Color.white;
+        spriteRenderer.color = Color.white;
 
         shielding = false;
         uiManager.UsedSecondAttack(defShieldCD);

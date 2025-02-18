@@ -153,7 +153,7 @@ MonoBehaviour:
   flying: 0
   ranged: 1
   projectile: {fileID: 4447028289257153718, guid: 06b911c56a1acfe4786e1a27d6a10a25, type: 3}
-  vertical: 0
+  vertical: 1
 --- !u!95 &2052439597592129450
 Animator:
   serializedVersion: 5
