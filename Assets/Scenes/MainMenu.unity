@@ -4367,7 +4367,8 @@ MonoBehaviour:
   m_text: "Made by:\n\tDavid Llabres Bagur\n\nMusic by:\n\tAdrian von ziegler - Hono
     no Megami \n\tBill Kiley - Snow\n\nAssets by:\n\tFrostwindz - Slash animations\t\tLinkNinja
     - Explosion\n\tLuizMelo & Nastanliev - Samurai\tAnsimuz - Enemies Sprites\n\tDream
-    Mix - Keyboard Icons\t\tLadySachmet - Campfire\n\tAnokoLisa - Tiles"
+    Mix - Keyboard Icons\t\tLadySachmet - Campfire\n\tAnokoLisa - Tiles\t\t\t\tNYKNCK
+    - Ladder"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
