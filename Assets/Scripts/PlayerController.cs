@@ -767,6 +767,7 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(attackTime);
         attackHitObject.transform.right = Vector2.right;
         attackColl.enabled = false;
+        slashAnimator.SetBool("Attacked", false);
         attackObject.SetActive(false);
         rigid.gravityScale = grav;
         attacking = false;

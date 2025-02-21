@@ -88,6 +88,8 @@ public class AnimalEnemy : MonoBehaviour
     private Animator animator;
     private SpriteRenderer spriteRenderer;
 
+    private Animator attackAnimator;
+
     private void Start()
     {
         if(!ranged) transform.rotation = Quaternion.Euler(0,0,0);
@@ -100,6 +102,7 @@ public class AnimalEnemy : MonoBehaviour
         player = FindObjectOfType<PlayerController>();
         originalPos = transform.position;
         if(ranged) StartCoroutine(MovementRanged());
+        else attackAnimator = GetComponentInChildren<Animator>();
         audioManager = FindObjectOfType<AudioManager>();
         if (lookingRight) spriteRenderer.flipX = true;
         else spriteRenderer.flipX = false;
@@ -286,6 +289,7 @@ public class AnimalEnemy : MonoBehaviour
         rigid.AddForce(dir * attackMov);
         attackColl.enabled = true;
         attackObject.SetActive(true);
+        attackAnimator.SetBool("Attacked", true);
 
         yield return new WaitForSeconds(attackTime);
 
