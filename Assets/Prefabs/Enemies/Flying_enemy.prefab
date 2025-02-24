@@ -238,7 +238,6 @@ MonoBehaviour:
   flying: 1
   ranged: 0
   projectile: {fileID: 0}
-  vertical: 0
 --- !u!95 &-4874964271885777306
 Animator:
   serializedVersion: 5
@@ -247,7 +246,7 @@ Animator:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4294926369335883935}
-  m_Enabled: 0
+  m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: b135cc9083358564398897145f374ba0, type: 2}
   m_CullingMode: 0

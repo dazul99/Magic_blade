@@ -26,11 +26,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject collGO;
     private CapsuleCollider2D coll;
     private GameManager gameManager;
-    [SerializeField]private SpriteRenderer spriteRenderer;
+    [SerializeField] private SpriteRenderer spriteRenderer;
 
     [SerializeField] private PhysicsMaterial2D material;
 
-
+    //Variables for the standard attack
     [SerializeField] private GameObject attackObject;
     [SerializeField] private GameObject attackHitObject;
     private Collider2D attackColl;
@@ -40,14 +40,16 @@ public class PlayerController : MonoBehaviour
     private float attackTime = 0.3f;
     [SerializeField] private float attackMove = 1f;
 
+    //SA = Secondary Attack
     [SerializeField] private SecondaryATKs currentSA;
 
     private bool canUseScndry = true;
     private int[] maxUses;
 
+    //CD = cooldown
     private float defShieldCD = 1f;
     [SerializeField] private float shieldDuration = 1f;
-    
+
 
     private float IceShotCD = 1f;
     [SerializeField] private GameObject icicleShotObject;
@@ -64,6 +66,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float height = (float)1.03;
     [SerializeField] private float width = 0.5f;
     private float horiz;
+
+    //acc = acceleration
     private float acc = 0;
 
     private float maxJump = 0.2f;
@@ -108,9 +112,6 @@ public class PlayerController : MonoBehaviour
     private RaycastHit2D[] dashHits;
     private bool specialDashing;
 
-
-
-
     [SerializeField] private UniqueSkill currentUS;
     [SerializeField] private int maxUSCharges;
     [SerializeField] private int currentUSCharges;
@@ -141,18 +142,19 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private Animator animator;
     [SerializeField] private Animator slashAnimator;
+
     private void Awake()
     {
         maxUses = new int[3];
-        maxUses[0] = 7; //7
+        maxUses[0] = 7; 
         maxUses[1] = 50;
-        maxUses[2] = 3; //3
+        maxUses[2] = 3; 
         turqoiseSplashRenderer = GetComponent<LineRenderer>();
         turqoiseSplashRenderer.enabled = false;
         rigid = GetComponent<Rigidbody2D>();
         coll = collGO.GetComponent<CapsuleCollider2D>();
-        
-        
+
+
     }
 
     private void Start()
@@ -170,7 +172,7 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
 
         if (dead) return;
 
@@ -184,7 +186,7 @@ public class PlayerController : MonoBehaviour
 
 
 
-        if (attacking || climbing || shielding|| working || paused)
+        if (attacking || climbing || shielding || working || paused)
         {
             return;
         }
@@ -297,9 +299,9 @@ public class PlayerController : MonoBehaviour
             {
                 ChangingSkills();
             }
-            else if(door != null)
+            else if (door != null)
             {
-                
+
                 door.Open();
             }
         }
@@ -310,7 +312,7 @@ public class PlayerController : MonoBehaviour
         }
 
         //BORRAR DESPUÉS
-        if(Input.GetKey(KeyCode.P) && Input.GetKeyDown(KeyCode.L))
+        if (Input.GetKey(KeyCode.P) && Input.GetKeyDown(KeyCode.L))
         {
             HasKilled();
         }
@@ -352,7 +354,7 @@ public class PlayerController : MonoBehaviour
     private void KillEnemies()
     {
         audioManager.PlayDeathEnemyLaser();
-        foreach(RaycastHit2D enemy in enemiesToKill)
+        foreach (RaycastHit2D enemy in enemiesToKill)
         {
             enemy.collider.gameObject.GetComponentInParent<AnimalEnemy>().Kill();
         }
@@ -368,7 +370,7 @@ public class PlayerController : MonoBehaviour
     private IEnumerator TurqoiseSplash()
     {
         turqoiseSplashDir = Direction();
-        turqoiseSplashHit = Physics2D.Raycast(transform.position, turqoiseSplashDir, 200 , groundLayer);
+        turqoiseSplashHit = Physics2D.Raycast(transform.position, turqoiseSplashDir, 200, groundLayer);
         turqoiseSplashRenderer.SetPosition(0, transform.position);
         turqoiseSplashRenderer.SetPosition(1, turqoiseSplashHit.point);
         distanceOfTS = Mathf.Sqrt((Mathf.Abs(turqoiseSplashHit.point.x - transform.position.x) * Mathf.Abs(turqoiseSplashHit.point.x - transform.position.x)) + (Mathf.Abs(turqoiseSplashHit.point.y - transform.position.y) * Mathf.Abs(turqoiseSplashHit.point.y - transform.position.y)));
@@ -408,7 +410,7 @@ public class PlayerController : MonoBehaviour
         dashHits = Physics2D.RaycastAll(transform.position, dir, distanceOfSpecialDash * 4);
         Vector2 finalPos = new Vector3(-1000, -1000, -1000);
 
-        foreach(RaycastHit2D rayh in dashHits)
+        foreach (RaycastHit2D rayh in dashHits)
         {
             if (rayh.collider.gameObject.CompareTag("Enemy"))
             {
@@ -435,9 +437,9 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (finalPos == new Vector2(-1000, -1000)) finalPos = transform.position + (new Vector3(dir.x,dir.y,0) * distanceOfSpecialDash * 4);
+        if (finalPos == new Vector2(-1000, -1000)) finalPos = transform.position + (new Vector3(dir.x, dir.y, 0) * distanceOfSpecialDash * 4);
         Vector2 aux = new Vector2(transform.position.x, transform.position.y);
-        dashHits = Physics2D.RaycastAll(transform.position - new Vector3(0,1,0), dir, distanceOfSpecialDash * 4);
+        dashHits = Physics2D.RaycastAll(transform.position - new Vector3(0, 1, 0), dir, distanceOfSpecialDash * 4);
         foreach (RaycastHit2D rayh in dashHits)
         {
             if (rayh.collider.gameObject.CompareTag("Enemy"))
@@ -468,7 +470,7 @@ public class PlayerController : MonoBehaviour
         while (!dead)
         {
             if (aux == 4) aux = 1;
-            if(acc != 0)
+            if (acc != 0)
             {
                 audioManager.PlayStep(aux);
                 aux++;
@@ -480,7 +482,7 @@ public class PlayerController : MonoBehaviour
     private void Attack2(SecondaryATKs sA)
     {
         currentUsesSecondaryATK--;
-        if(sA == SecondaryATKs.IcicleShot)
+        if (sA == SecondaryATKs.IcicleShot)
         {
             IcicleShot();
         }
@@ -488,7 +490,7 @@ public class PlayerController : MonoBehaviour
         {
             StartCoroutine(DefinitiveShield());
         }
-        else if(sA == SecondaryATKs.Fireball)
+        else if (sA == SecondaryATKs.Fireball)
         {
             Fireball();
         }
@@ -517,11 +519,13 @@ public class PlayerController : MonoBehaviour
 
             aux = Vector2.right + Vector2.up;
             jumpedLeft = true;
+            FlipSprite(true);
         }
         else if (wallRight)
         {
             aux = Vector2.left + Vector2.up;
             jumpedRight = true;
+            FlipSprite(false);
         }
         audioManager.PlayJump();
         aux.Normalize();
@@ -544,12 +548,12 @@ public class PlayerController : MonoBehaviour
 
     private void CheckGround()
     {
-        if(rigid.velocity.y > 0 && !goingthrough)
+        if (rigid.velocity.y > 0 && !goingthrough)
         {
             gameManager.SetPlatformsTrigger(true);
             goingthrough = true;
         }
-        else if(rigid.velocity.y <= 0 && goingthrough)
+        else if (rigid.velocity.y <= 0 && goingthrough)
         {
             gameManager.SetPlatformsTrigger(false);
             goingthrough = false;
@@ -570,14 +574,14 @@ public class PlayerController : MonoBehaviour
 
         if (touchingGround)
         {
-            if(jumpedLeft) jumpedLeft = false;
-            if(jumpedRight) jumpedRight = false;
+            if (jumpedLeft) jumpedLeft = false;
+            if (jumpedRight) jumpedRight = false;
         }
     }
 
     private void CheckWalls()
     {
-        float dist =  0.07f + ddelta;
+        float dist = 0.07f + ddelta;
 
         Debug.DrawRay(transform.position - new Vector3(wallRaycastLeft, 0, 0), Vector3.left * ddelta);
         Debug.DrawRay(transform.position - new Vector3(wallRaycastRight, 0, 0), Vector3.right * ddelta);
@@ -592,13 +596,13 @@ public class PlayerController : MonoBehaviour
 
         if (!wallLeft)
         {
-            
+
             wallHits = Physics2D.Raycast(transform.position - new Vector3(wallRaycastRight, 0, 0), Vector2.right, dist, groundLayer);
             wallRight = wallHits.collider != null && wallHits.collider.gameObject.CompareTag("Wall");
             if (!wallRight)
             {
-                 wallHits = Physics2D.Raycast(transform.position - new Vector3(wallRaycastRight, 0.95f, 0), Vector2.right, dist, groundLayer);
-                 wallRight = wallHits.collider != null && wallHits.collider.gameObject.CompareTag("Wall");
+                wallHits = Physics2D.Raycast(transform.position - new Vector3(wallRaycastRight, 0.95f, 0), Vector2.right, dist, groundLayer);
+                wallRight = wallHits.collider != null && wallHits.collider.gameObject.CompareTag("Wall");
 
             }
         }
@@ -608,19 +612,21 @@ public class PlayerController : MonoBehaviour
             horiz = -1;
             //acc = 0.5f;
             jumpedRight = false;
+            
             if (!spriteRenderer.flipX)
             {
-                spriteRenderer.flipX = true;
+                FlipSprite(true);
             }
         }
         if (wallRight && jumpedLeft)
         {
             horiz = 1;
             jumpedLeft = false;
+            
             //acc = 0;
             if (spriteRenderer.flipX)
             {
-                spriteRenderer.flipX = false;
+                FlipSprite(false);
             }
         }
     }
@@ -641,21 +647,15 @@ public class PlayerController : MonoBehaviour
             //acc = 0;
             return;
         }
-       
+
 
         if (Input.GetKey(KeyCode.A))
         {
-            
+
             horiz = -1;
             if (!spriteRenderer.flipX)
             {
-                spriteRenderer.flipX = true;
-                coll.transform.localScale = new Vector3 (-1,1,1);
-                wallRaycastLeft += 0.26f;
-                wallRaycastRight += 0.26f;
-                groundRaycastLeft += 0.45f;
-                groundRaycastRight -= 0.45f;
-
+                FlipSprite(false);
                 acc = 0;
             }
             if (acc <= 1) acc += 0.03f;
@@ -663,16 +663,11 @@ public class PlayerController : MonoBehaviour
         }
         else if (Input.GetKey(KeyCode.D))
         {
-            
+
             horiz = 1;
             if (spriteRenderer.flipX)
             {
-                spriteRenderer.flipX = false;
-                coll.transform.localScale = Vector3.one;
-                wallRaycastLeft -= 0.26f;
-                wallRaycastRight -= 0.26f;
-                groundRaycastLeft -= 0.45f;
-                groundRaycastRight += 0.45f;
+                FlipSprite(true);
                 acc = 0;
             }
             if (acc <= 1) acc += 0.03f;
@@ -748,7 +743,7 @@ public class PlayerController : MonoBehaviour
     private IEnumerator Attack1()
     {
         animator.SetBool("Attacked", true);
-        
+
         audioManager.PlaySwordAttack();
         float aux = acc;
         canAttack = false;
@@ -756,14 +751,14 @@ public class PlayerController : MonoBehaviour
         float grav = rigid.gravityScale;
         rigid.gravityScale = 0;
         Vector2 dir = Direction();
-        attackHitObject.transform.right =dir;
+        attackHitObject.transform.right = dir;
         attackColl.enabled = true;
         attackObject.SetActive(true);
         slashAnimator.SetBool("Attacked", true);
-        rigid.velocity = new Vector2(rigid.velocity.x/2,rigid.velocity.y/2);  
+        rigid.velocity = new Vector2(rigid.velocity.x / 2, rigid.velocity.y / 2);
         rigid.AddForce(dir * attackMove);
 
-        
+
         yield return new WaitForSeconds(attackTime);
         attackHitObject.transform.right = Vector2.right;
         attackColl.enabled = false;
@@ -780,8 +775,8 @@ public class PlayerController : MonoBehaviour
     private void IcicleShot()
     {
         Vector2 dir = Direction();
-        Vector3 aux = new Vector3 (0,0,0);
-        aux =  dir;
+        Vector3 aux = new Vector3(0, 0, 0);
+        aux = dir;
         canUseScndry = false;
         Instantiate(icicleShotObject, transform.position + aux, Quaternion.LookRotation(transform.forward, dir));
         uiManager.UsedSecondAttack(IceShotCD);
@@ -829,7 +824,7 @@ public class PlayerController : MonoBehaviour
     {
         goingthrough = x;
     }
-    
+
     public void SetDoor(Door d)
     {
         if (d != null) uiManager.ShowInteractable();
@@ -856,9 +851,9 @@ public class PlayerController : MonoBehaviour
             currentLadder = l;
         }
 
-        
+
     }
-    
+
     public void SetLadderEnd(LadderEnd ladderEnd)
     {
         if (ladderEnd.GetTop())
@@ -903,13 +898,13 @@ public class PlayerController : MonoBehaviour
         else if (!dead)
         {
             Die();
-            
+
         }
     }
 
     public void GotShot(Projectile p)
     {
-        if(attacking)
+        if (attacking)
         {
             Vector2 dir = Direction();
             p.Return(dir);
@@ -944,7 +939,7 @@ public class PlayerController : MonoBehaviour
     {
         return currentRoom;
     }
-    
+
     public bool IsClimbing()
     {
         return climbing;
@@ -969,7 +964,7 @@ public class PlayerController : MonoBehaviour
             currentUSCharges++;
             uiManager.ChangeUniqueSkill(currentUSCharges);
         }
-        
+
     }
 
     public int GetUSCharges()
@@ -985,7 +980,7 @@ public class PlayerController : MonoBehaviour
 
     public int CurrentUS()
     {
-        return (int) currentUS;
+        return (int)currentUS;
     }
 
     public int CurrentScndryA()
@@ -995,12 +990,12 @@ public class PlayerController : MonoBehaviour
 
     public void SetUniqueSkill(int x)
     {
-        currentUS = (UniqueSkill) x;
+        currentUS = (UniqueSkill)x;
     }
 
     public void SetSecondaryAttack(int x)
     {
-        currentSA = (SecondaryATKs) x;
+        currentSA = (SecondaryATKs)x;
         maxUsesSecondaryATK = maxUses[x];
         currentUsesSecondaryATK = maxUsesSecondaryATK;
         uiManager.UpdateSecondAttack(maxUses[x], x);
@@ -1030,4 +1025,28 @@ public class PlayerController : MonoBehaviour
         gameManager.GotToEnd();
     }
 
+    private void FlipSprite(bool right)
+    {
+        if (right && spriteRenderer.flipX)
+        {
+            spriteRenderer.flipX = false;
+            coll.transform.localScale = Vector3.one;
+            wallRaycastLeft -= 0.26f;
+            wallRaycastRight -= 0.26f;
+            groundRaycastLeft -= 0.45f;
+            groundRaycastRight += 0.45f;
+            return;
+        }
+        if(!right && !spriteRenderer.flipX)
+        {
+            spriteRenderer.flipX = true;
+            coll.transform.localScale = new Vector3(-1, 1, 1);
+            wallRaycastLeft += 0.26f;
+            wallRaycastRight += 0.26f;
+            groundRaycastLeft += 0.45f;
+            groundRaycastRight -= 0.45f;
+            return;
+        }
+        return;
+    }
 }

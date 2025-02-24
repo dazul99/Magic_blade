@@ -23,7 +23,6 @@ public class AnimalEnemy : MonoBehaviour
     private RaycastHit2D[] detecting;
     private RaycastHit2D[] chasing;
 
-    private bool canSeePlayer = false;
     private Vector3 offset = new Vector3(0.51f, 0.25f, 0);
 
     private bool idleState = true;
@@ -63,8 +62,10 @@ public class AnimalEnemy : MonoBehaviour
     [SerializeField] private float attackDelay = 0.75f;
     private float attackTime = 0.3f;
 
+    //variable para entrar solo una vez en el suspicious state
     private bool notEnterAgain = false;
 
+    //LP = last position
     private float distanceToLP;
 
     private float stunnedTime;
@@ -79,7 +80,6 @@ public class AnimalEnemy : MonoBehaviour
     [SerializeField] private bool ranged = false;
     [SerializeField] private GameObject projectile;
 
-    [SerializeField] private bool vertical = false;
 
     private float movementOfRanged = 0.5f;
 
@@ -90,35 +90,53 @@ public class AnimalEnemy : MonoBehaviour
 
     private Animator attackAnimator;
 
-    private void Start()
+    //Inicialización de variables relacionadas con los componentes del objeto
+
+    private void Awake()
     {
-        if(!ranged) transform.rotation = Quaternion.Euler(0,0,0);
+        if (!ranged) transform.rotation = Quaternion.Euler(0, 0, 0);
         animator = GetComponent<Animator>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        gameManager = FindObjectOfType<GameManager>();
-        coll = collGO.GetComponent<Collider2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>(); 
         rigid = GetComponent<Rigidbody2D>();
-        if(attackHitObject != null) attackColl = attackHitObject.GetComponent<Collider2D>();
-        player = FindObjectOfType<PlayerController>();
         originalPos = transform.position;
-        if(ranged) StartCoroutine(MovementRanged());
-        else attackAnimator = GetComponentInChildren<Animator>();
-        audioManager = FindObjectOfType<AudioManager>();
         if (lookingRight) spriteRenderer.flipX = true;
         else spriteRenderer.flipX = false;
     }
 
+    //Inicialización de variables relacionadas con otros objetos
+    private void Start()
+    {
+        gameManager = FindObjectOfType<GameManager>();
+        coll = collGO.GetComponent<Collider2D>();
+        if(attackHitObject != null) attackColl = attackHitObject.GetComponent<Collider2D>();
+        player = FindObjectOfType<PlayerController>();
+        if(ranged) StartCoroutine(MovementRanged());
+        else attackAnimator = GetComponentInChildren<Animator>();
+        audioManager = FindObjectOfType<AudioManager>();
+        
+    }
+
     private void Update()
     {
+        //si no vuelan ni son a rango detectan al player de forma normal, en una dirección
+
         if (!flying && !ranged) Detect();
+
+        //si vuelan o son a rango detectan en un radio
+
         else DetectRadius();
+
+        //si el enemigo está stun hay que hacer return, y lo mismo si ataca, para que no se mueva ni ataque durante un ataque
         if (stunned)
         {
             rigid.velocity = Vector2.zero;
             return;
         }
         if (attacking) return;
+
         detecting = null;
+
+        //girar el sprite si se da la vuelta el enemigo
         if (rigid.velocity.x > 0 && lookingRight)
         {
             lookingRight = false;
@@ -130,36 +148,29 @@ public class AnimalEnemy : MonoBehaviour
             spriteRenderer.flipX = false;
 
         }
+
+        //si tiene velocidad empezará la animación de correr (si tiene)
         animator.SetFloat("Speed", Mathf.Abs(rigid.velocity.x) + Mathf.Abs(rigid.velocity.y));
+
 
         if (!dead)
         {
-            
+            //Revisar en que estado se encuentra el enemigo, Tiene tres estados posible
+
+            //Idle state: regresar a la posición original
             if (idleState)
             {
-                if (ranged)
-                {
-                    return;
-                }
-                distanceToLP = Mathf.Abs(originalPos.x - transform.position.x);
-                if (distanceToLP > 1f) //mirar si está lejos de su posición inicial
-                {
-                    float dir = Mathf.Sign(originalPos.x - transform.position.x);
-                    rigid.velocity = new Vector2(speed * dir, rigid.velocity.y);
-                }
-                else
-                {
-                    rigid.velocity = new Vector2(0,rigid.velocity.y);
-                }
-                if (notEnterAgain) notEnterAgain = false;
+                IdleState();
                 return;
             }
+
+            //Chasing State: perseguir al player y atacar si puede
+            //NO SACAR DE UPDATE, usa mucho el return y sería dificil adaptar a una función
             else if (chasingState)
             {
                 if (notEnterAgain) notEnterAgain = false;
-                
 
-                //Comprobar si aún se le ve
+                //Comprobar si aún ve al player
 
                 direction = player.transform.position - transform.position;
                 direction.Normalize();
@@ -173,13 +184,16 @@ public class AnimalEnemy : MonoBehaviour
                 if (!chasingState) return;
                 Debug.DrawRay(transform.position, new Vector2(rangeOfAttack, 0));
 
+                //si es un enemigo a rango ataca desde donde esté
                 if (ranged)
                 {
                     attacking = true;   
                     StartCoroutine(RangedAttack());
                     return;
                 }
+
                 //acercarse si no está lo suficientemente cerca
+
                 if (Physics2D.OverlapCircle(transform.position, rangeOfAttack, playerLayer) == null) 
                 {
                     if (!flying)
@@ -194,7 +208,7 @@ public class AnimalEnemy : MonoBehaviour
                     }
                     
                 }
-                else //si está suficientemente cerca
+                else //si está suficientemente cerca atacar
                 {
                     if(!flying) rigid.velocity = new Vector2(0, rigid.velocity.y);
                     else rigid.velocity = new Vector2(0,0);
@@ -206,35 +220,65 @@ public class AnimalEnemy : MonoBehaviour
                 
 
             }
+
+
+            //Suspicious State: el enemigo busca al Player cuando lo pierde de vista
+            //solo se entra una vez porque empieza una corutina 
             else if (suspiciousState && !notEnterAgain)
             {
-                if(ranged)
-                {
-                    suspiciousState = false;
-                    idleState = true;
-                    StartCoroutine(MovementRanged());
-                    return;
-                }
-                if (lastPosition != null) //mirar si tenemos una última posición
-                {
-                    distanceToLP = Mathf.Abs(lastPosition.x - transform.position.x);
-                    if (distanceToLP < 1f) //mirar si está lo suficientemente cerca de esa posición
-                    {
-                        StartCoroutine(SearchInPlace());
-                        notEnterAgain = true;
-                    }
-                    else
-                    {
-                        float dir = (lastPosition.x - transform.position.x) / Mathf.Abs(lastPosition.x - transform.position.x);
-                        rigid.velocity = new Vector2(speed * dir, rigid.velocity.y);
-                    }
-                }
+                SuspiciousState();
+                return;
             }
         }
         if (wall) wall = false;
     }
 
+    private void SuspiciousState()
+    {
+        //Si es un enemigo a rango no ha de entrar en suspicious state
+        if (ranged)
+        {
+            suspiciousState = false;
+            idleState = true;
+            StartCoroutine(MovementRanged());
+            return;
+        }
+        if (lastPosition != null) //mirar si tenemos una última posición
+        {
+            distanceToLP = Mathf.Abs(lastPosition.x - transform.position.x);
+            if (distanceToLP < 1f) //mirar si está lo suficientemente cerca de esa posición
+            {
+                StartCoroutine(SearchInPlace());
+                notEnterAgain = true;
+            }
+            else
+            {
+                float dir = (lastPosition.x - transform.position.x) / Mathf.Abs(lastPosition.x - transform.position.x);
+                rigid.velocity = new Vector2(speed * dir, rigid.velocity.y);
+            }
+        }
+    }
+
+    private void IdleState()
+    {
+        if (ranged)
+        {
+            return;
+        }
+        distanceToLP = Mathf.Abs(originalPos.x - transform.position.x);
+        if (distanceToLP > 1f) //mirar si está lejos de su posición inicial
+        {
+            float dir = Mathf.Sign(originalPos.x - transform.position.x);
+            rigid.velocity = new Vector2(speed * dir, rigid.velocity.y);
+        }
+        else
+        {
+            rigid.velocity = new Vector2(0, rigid.velocity.y);
+        }
+        if (notEnterAgain) notEnterAgain = false;
+    }
    
+    //Funcion para que el enemigo vaya alternando entre buscar a la izquierda y a la derecha cuando está en suspicious state
     private IEnumerator SearchInPlace()
     {
         rigid.velocity = new Vector2(0, rigid.velocity.y);
@@ -330,9 +374,7 @@ public class AnimalEnemy : MonoBehaviour
         attacking = false;
     }
 
-
-
-
+    //Funcion para calcular el origen de los raycasts de detección para los enemigos que no detectan con radio
     private void CalculateRaycastOrigin()
     {
         if (lookingRight && front != Vector3.right)
@@ -395,6 +437,8 @@ public class AnimalEnemy : MonoBehaviour
 
     }
 
+    //Comprueba si en el array que se ha hecho en el Chasing State se encuentra el player y si no hay una pared antes
+    //Resumen: si aún lo ve
     private void ChasingCheck()
     {
         if (chasing.Length > 0)
@@ -429,10 +473,12 @@ public class AnimalEnemy : MonoBehaviour
         }
     }
 
+    //Manejo del Raycast para la detección del player
     private void DetectingCheck()
     {
         if (detecting.Length > 0)
         {
+            //mientras no encuentre una pared ni al player no sale sel bucle hasta revisar todo con lo que ha chocado el rayo
             for (int i = 0; i < detecting.Length && !wall; i++)
             {
                 if (detecting[i].collider != null && detecting[i].collider.gameObject.CompareTag("Wall"))
@@ -503,6 +549,9 @@ public class AnimalEnemy : MonoBehaviour
         }
     }
 
+    //Funcion que comprueba si una explosión o un ataque le da realmente al objetivo
+    //El collider de una explosión puede atravesar una pared, pero en ese caso el enemigo no ha de morir
+    //Esta funcion sirve para saber si la explosión acierta realmente al enemigo o hay una pared en medio
     private bool ItHits(Collider2D collision)
     {
         Vector2 aux1 = coll.ClosestPoint(collision.gameObject.transform.position);
@@ -513,19 +562,14 @@ public class AnimalEnemy : MonoBehaviour
         return attackHits.collider == null;
     }
 
+    //Funcion para que los enemigos a rango hagan un pequeño movimiento bailarín
     private IEnumerator MovementRanged()
     {
         while (!dead && idleState)
         {
-            
-            if (!vertical)
-            {
-                transform.Translate(0, movementOfRanged, 0);
-            }
-            else
-            {
-                transform.Translate(movementOfRanged, 0, 0);
-            }
+
+            transform.Translate(movementOfRanged, 0, 0);
+
 
             yield return new WaitForSeconds(0.3f);
 

@@ -16,6 +16,7 @@ public class MainMenu : MonoBehaviour
 
     private void Start()
     {
+        //si hay una partida ya emnpezada que haya llegado más lejos del level 1 se activa el botón de continuar
         currentLevel = PlayerPrefs.GetInt("Level");
         if (currentLevel == 0) continueButton.interactable = false;
         panel.SetActive(true);

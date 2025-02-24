@@ -27,8 +27,6 @@ public class Boss : MonoBehaviour
 
     [SerializeField] private LayerMask projectileLayer;
 
-    [SerializeField] private bool vertical = false;
-
     private AudioManager audioManager;
 
     [SerializeField] private float attackCD = 1.5f;
@@ -63,6 +61,8 @@ public class Boss : MonoBehaviour
         
         rigid.velocity = Vector2.zero;
 
+        //Parecido al resto de enemigos tiene 2 estados
+        //Detectar al player
         if (idleState)
         {
             detecting = Physics2D.OverlapCircle(transform.position, rangeOfDetection, playerLayer);
@@ -71,6 +71,7 @@ public class Boss : MonoBehaviour
                 StartCoroutine(WaitForTime());
             }
         }
+        //Combat State: ataca cuando puede
         else
         {
             

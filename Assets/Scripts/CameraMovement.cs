@@ -22,9 +22,9 @@ public class CameraMovement : MonoBehaviour
 
     private bool moving;
 
-    private float normalSize = 8f;
     private float bossSize = 13f;
     private Vector3 bossPos = new Vector3(8.7f, 2.89f, -10);
+
 
     private void Awake()
     {
@@ -48,6 +48,8 @@ public class CameraMovement : MonoBehaviour
         playerY = player.transform.position.y;
         xMovement = playerX - transform.position.x;
         yMovement = playerY - transform.position.y;
+
+        //La camara no puede salir de los bounds del collider del gameobject padre 
         if(playerX > transform.position.x)
         {
             if (transform.position.x >= xBounds.x) xMovement = 0;
@@ -71,6 +73,7 @@ public class CameraMovement : MonoBehaviour
         transform.Translate(new Vector3(xMovement * 3f , yMovement * 3, 0) * Time.deltaTime);
     }
 
+    //La camera se centra en la arena del boss y se aleja para verlo todo
     public void LockIn(Vector2 pos)
     {
         gameObject.GetComponent<Camera>().orthographicSize = bossSize;

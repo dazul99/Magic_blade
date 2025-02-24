@@ -25,6 +25,7 @@ public class GameManager : MonoBehaviour
     private UIManager uiManager;
     private CameraMovement cam;
 
+    //variable solo para la escena del boss, muro invisible para que el Player no salga de la arena
     [SerializeField] private GameObject invWallBossRoom;
 
     void Start()
@@ -34,13 +35,15 @@ public class GameManager : MonoBehaviour
         playerController = FindObjectOfType<PlayerController>();
         numberOfEnemies = FindObjectsOfType<AnimalEnemy>().Length;
         StartCoroutine(LoadLevel());
+
+        //si no es el level 1 se carga de playerprefs esos tres valores (en el main menu no hay game manager así que no se ejecuta)
         if (SceneManager.GetActiveScene().buildIndex != 1)
         {
             playerController.SetUSCharges(PlayerPrefs.GetInt("Ultimate_Skill_Charges"));
             playerController.SetUniqueSkill(PlayerPrefs.GetInt("Ultimate_Skill"));
             playerController.SetSecondaryAttack(PlayerPrefs.GetInt("Secondary_Attack"));
         }
-        else
+        else //si es el level 1 se pone a 0
         {
             playerController.SetUniqueSkill(0);
             playerController.SetSecondaryAttack(0);
@@ -53,12 +56,15 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+
+        //Mueve el cursor en el juego junto al ratón
         mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mousePos.z = Camera.main.nearClipPlane;
         crosshair.transform.position = mousePos;
         
     }
 
+    //Hace que las plataformas puedan o no atravesarse
     public void SetPlatformsTrigger(bool x)
     {
         for(int i = 0; i < platforms.Length; i++)
@@ -77,6 +83,7 @@ public class GameManager : MonoBehaviour
         return playerController.transform.position;
     }
 
+    //Cuando un enemigo muere se reduce el numero de enemigos restantes y si es 0 se desbloquea el final del nivel
     public void EnemyDied()
     {
         playerController.HasKilled();
@@ -102,6 +109,7 @@ public class GameManager : MonoBehaviour
         SaveGame();
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
     }
+
 
     private void SaveGame()
     {
