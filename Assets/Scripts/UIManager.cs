@@ -37,10 +37,11 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] private GameObject workStationPanel;
 
+    //Tgls = toggles, scndry = secondary, us = ultimate skill
+
+    //Variables for the workstation, used to get all toggles from the workstation panel and to know which ones are set
     [SerializeField] private Toggle[] scndryTgls;
     private int scndryATglsIndex;
-
-
     [SerializeField] private Toggle[] uSTgls;
     private int uSTglsIndex;
 
@@ -122,12 +123,15 @@ public class UIManager : MonoBehaviour
         interactButton.SetActive(false);
     }
 
+    //This is the timer so the player doesn't spend too much time in one level.
     private IEnumerator Countdown()
     {
         while (timeToEndStage > 0)
         {
             yield return new WaitForSeconds(0.1f);
             timeToEndStage -= 0.1f;
+
+            //this is because if we don't round the number it starts displaying 0.9999999 numbers
             timeToEndStage = Mathf.Round(timeToEndStage * 100) / 100;
             timeLeft.text = timeToEndStage.ToString();
         }
@@ -142,6 +146,7 @@ public class UIManager : MonoBehaviour
         StartCoroutine(NormalCooldown());
     }
 
+    //The cooldown manager for the normal attack, it's in the UIManager because like this it synchronizes with the time showed on the screen
     private IEnumerator NormalCooldown()
     {
         normalCDDone = false;
@@ -177,6 +182,7 @@ public class UIManager : MonoBehaviour
         StartCoroutine(SecondCooldown());
     }
 
+    //same as the normal attack cooldown but this one is for the secondary attack
     private IEnumerator SecondCooldown()
     {
         secondCDDone = false;
@@ -200,7 +206,7 @@ public class UIManager : MonoBehaviour
 
     public void UsedSpecialDash()
     {
-        //cambiar sprite de dashattackuse y dashattackimage 
+        
         dashAttackImage.color = usedSkillColor;
     }
 
@@ -219,6 +225,7 @@ public class UIManager : MonoBehaviour
         uniqueSkillSlider.value = x;
     }
 
+    //manager for the US (Ultimate Skills) on the campfire (workstation GO)
     public void ChangedUS(int x)
     {
         if (changing) return;
@@ -234,6 +241,8 @@ public class UIManager : MonoBehaviour
         uSTglsIndex = x;
         changing = false;
     }
+
+    //manager for the SA (Secondary attacks) on the campfire (workstation GO)
     public void ChangedSA(int x)
     {
         if (changing) return;
@@ -259,6 +268,7 @@ public class UIManager : MonoBehaviour
         uSTgls[uSTglsIndex].isOn = true;
     }
 
+    //When we hide the worksStation panel we update the secondary attack and ultimate skill for the player
     public void HideWorkStation()
     {
         workStationPanel.SetActive(false);

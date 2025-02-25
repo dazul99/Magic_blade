@@ -83,7 +83,7 @@ public class AudioManager : MonoBehaviour
     private void UpdateAudio()
     {
         musicSource.volume = masterVolume * musicVolume;
-        miscSource1.volume = miscSource2.volume = masterVolume * miscVolume;
+        miscSource1.volume = miscSource2.volume = footsepsSource.volume = masterVolume * miscVolume;
     }
 
     public float GetMaster()

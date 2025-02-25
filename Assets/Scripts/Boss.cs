@@ -61,8 +61,8 @@ public class Boss : MonoBehaviour
         
         rigid.velocity = Vector2.zero;
 
-        //Parecido al resto de enemigos tiene 2 estados
-        //Detectar al player
+        //Similar to other enemies, it has 2 states
+        //Idle state: Detect the player
         if (idleState)
         {
             detecting = Physics2D.OverlapCircle(transform.position, rangeOfDetection, playerLayer);
@@ -71,7 +71,7 @@ public class Boss : MonoBehaviour
                 StartCoroutine(WaitForTime());
             }
         }
-        //Combat State: ataca cuando puede
+        //Combat State: Attacks whenever it's possible
         else
         {
             

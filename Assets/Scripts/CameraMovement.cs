@@ -49,7 +49,7 @@ public class CameraMovement : MonoBehaviour
         xMovement = playerX - transform.position.x;
         yMovement = playerY - transform.position.y;
 
-        //La camara no puede salir de los bounds del collider del gameobject padre 
+        //Check that the camera doesn't exit the collider of the parent object
         if(playerX > transform.position.x)
         {
             if (transform.position.x >= xBounds.x) xMovement = 0;
@@ -73,7 +73,7 @@ public class CameraMovement : MonoBehaviour
         transform.Translate(new Vector3(xMovement * 3f , yMovement * 3, 0) * Time.deltaTime);
     }
 
-    //La camera se centra en la arena del boss y se aleja para verlo todo
+    //The camera moves to the center of the boss arena and zooms out
     public void LockIn(Vector2 pos)
     {
         gameObject.GetComponent<Camera>().orthographicSize = bossSize;

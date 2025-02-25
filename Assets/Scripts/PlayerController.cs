@@ -31,14 +31,14 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PhysicsMaterial2D material;
 
     //Variables for the standard attack
-    [SerializeField] private GameObject attackObject;
-    [SerializeField] private GameObject attackHitObject;
-    private Collider2D attackColl;
-    private bool canAttack = true;
-    private bool attacking = false;
-    [SerializeField] private float attackCD = 1f;
-    private float attackTime = 0.3f;
-    [SerializeField] private float attackMove = 1f;
+    [SerializeField] private GameObject attackObject;   //the object for the sprite of the attack
+    [SerializeField] private GameObject attackHitObject;    //Object with the hitbox of the attack
+    private Collider2D attackColl; //collider of the previous variable
+    private bool canAttack = true; //Variable to check if the standard attack is on cooldown
+    private bool attacking = false; //Variable to know if it's arleady attacking
+    [SerializeField] private float attackCD = 1f; //Variable to set the cooldown of the attack
+    private float attackTime = 0.3f; //Variable to set how much time will the character be attacking
+    [SerializeField] private float attackMove = 1f; //Variable to push the player whenever he attacks towards the direction of the attack
 
     //SA = Secondary Attack
     [SerializeField] private SecondaryATKs currentSA;
@@ -64,7 +64,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask groundLayer;
 
     [SerializeField] private float height = (float)1.03;
-    [SerializeField] private float width = 0.5f;
     private float horiz;
 
     //acc = acceleration
@@ -89,7 +88,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float ladderSpeed;
     private Ladder currentLadder;
 
-    private Room currentRoom;
 
 
     private bool dead;
@@ -169,28 +167,28 @@ public class PlayerController : MonoBehaviour
         uiManager.GameStarted();
         StartCoroutine(WalkingSounds());
     }
-    // Update is called once per frame
+
+
     void Update()
     {
 
-
+        //If the player is dead we exit the update right away
         if (dead) return;
 
+        //this updates the animator with the info to play the running/jumping/falling animations
         animator.SetFloat("YSpeed", rigid.velocity.y);
         animator.SetFloat("XSpeed", Mathf.Abs(rigid.velocity.x));
 
-
+        //Checks if it's on the ground or in the air and if it's touching a wall or not
         CheckGround();
 
         CheckWalls();
 
 
+        //Cases where it has to return because player can't do anything
+        if (attacking || climbing || shielding || working || paused) return;
 
-        if (attacking || climbing || shielding || working || paused)
-        {
-            return;
-        }
-
+        //when using speciall dash it also has to return, but after checking if it used special dash
         if (specialDashing)
         {
             Vector2 dir = Direction();
@@ -204,6 +202,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        //This one returns as well, after killing all enemies that hit the rays
         if (shootingRay)
         {
             rigid.velocity = new Vector2(0f, 0f);
@@ -217,10 +216,11 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        //here it checks all of the inputs
         InputsUpdate();
 
 
-
+        //if it's not attacking it checks the gravity, since there is more gravity when going up than when going down
         if (!attacking)
         {
             CheckGravity();
@@ -231,7 +231,7 @@ public class PlayerController : MonoBehaviour
 
     private void InputsUpdate()
     {
-
+        //S is used to go down a ladder or get off a platform
         if (Input.GetKeyDown(KeyCode.S) && touchingGround)
         {
 
@@ -249,6 +249,7 @@ public class PlayerController : MonoBehaviour
 
         }
 
+        //W is used to go up a ladder, jump, or walljump
         if (Input.GetKeyDown(KeyCode.W))
         {
             if (ladderBottom)
@@ -267,25 +268,30 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        //Checks the horizontal movement, more comments on the respective funtion
         Movement();
 
-        if (locked) return;
+        if (locked) return; //locked makes it so you can't move or do anything, so it just returns
 
+        //Left shift makes the player enter the special dash
         if (Input.GetKeyDown(KeyCode.LeftShift) && !hasUsedSpecialDash)
         {
             EnterDashMode();
         }
 
+        //left click makes the character attack
         if (Input.GetMouseButtonDown(0) && canAttack)
         {
             StartCoroutine(Attack1());
         }
 
+        //Right click makes the character use the secondary attack
         if (Input.GetMouseButtonDown(1) && canUseScndry && currentUsesSecondaryATK > 0)
         {
             Attack2(currentSA);
         }
 
+        //Space uses the ultimate skill if the charge bar is filled
         if (Input.GetKeyDown(KeyCode.Space) && currentUSCharges >= maxUSCharges)
         {
             UseUniqueSkill();
@@ -293,6 +299,7 @@ public class PlayerController : MonoBehaviour
             uiManager.ChangeUniqueSkill(0);
         }
 
+        //E is to open doors or use the work station (or campfire)
         if (Input.GetKeyDown(KeyCode.E))
         {
             if (onWorkStation)
@@ -306,20 +313,30 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        //Escape is to pause the game
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             PauseGame();
         }
 
-        //BORRAR DESPUÉS
+        //CHEAT CODES
+
+        //fill up ultimate skill bar
         if (Input.GetKey(KeyCode.P) && Input.GetKeyDown(KeyCode.L))
         {
             HasKilled();
         }
 
+        //go back to level 1
         if (Input.GetKey(KeyCode.P) && Input.GetKeyDown(KeyCode.M))
         {
             SceneManager.LoadScene(1);
+        }
+
+        //Go to next level, DO NOT USE ON BOSS STAGE
+        if (Input.GetKey(KeyCode.P) && Input.GetKey(KeyCode.O) && Input.GetKeyDown(KeyCode.K))
+        {
+            gameManager.GotToEnd();
         }
 
     }
@@ -351,6 +368,7 @@ public class PlayerController : MonoBehaviour
         working = false;
     }
 
+    //Funtion to kill the enemies with the laser (turqoise splash)
     private void KillEnemies()
     {
         audioManager.PlayDeathEnemyLaser();
@@ -360,6 +378,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+
     private void UseUniqueSkill()
     {
         if (currentUS == global::UniqueSkill.BluePlanet) StartCoroutine(BluePlanet());
@@ -367,6 +386,9 @@ public class PlayerController : MonoBehaviour
         else return;
     }
 
+    //Ultimate Skills 
+
+    //It creates a Ray with the line renderer and kills all enemies that touch it (using raycast to find out)
     private IEnumerator TurqoiseSplash()
     {
         turqoiseSplashDir = Direction();
@@ -383,6 +405,7 @@ public class PlayerController : MonoBehaviour
         turqoiseSplashRenderer.enabled = false;
     }
 
+    //Slows time for a limited time duration
     private IEnumerator BluePlanet()
     {
         Time.timeScale = timeSlowed;
@@ -392,6 +415,9 @@ public class PlayerController : MonoBehaviour
         Time.timeScale = 1f;
     }
 
+    //Special dash
+
+    //slow down time and shows the range and danger zone of the dash 
     private void EnterDashMode()
     {
         Time.timeScale = 0.2f;
@@ -400,6 +426,7 @@ public class PlayerController : MonoBehaviour
         specialDashDangerZone.SetActive(true);
     }
 
+    //when it exits creates three rays, kills all enemies that touch it and moves the player towards the direction, it can't go through walls
     private void ExitDashMode()
     {
         audioManager.PlayDash();
@@ -422,6 +449,8 @@ public class PlayerController : MonoBehaviour
                 rayh.collider.gameObject.GetComponentInParent<Crystal>().Break();
 
             }
+
+            //the central ray checks for walls and doors, and if it finds any that's where the player will move to, and the rest of the rays will have the length of the distance between the start of the ray and the wall
             else if (rayh.collider.gameObject.CompareTag("Wall") || rayh.collider.gameObject.CompareTag("Door"))
             {
                 finalPos = rayh.point;
@@ -446,6 +475,12 @@ public class PlayerController : MonoBehaviour
             {
                 rayh.collider.gameObject.GetComponentInParent<AnimalEnemy>().Kill();
             }
+
+            else if (rayh.collider.gameObject.CompareTag("Crystal"))
+            {
+                rayh.collider.gameObject.GetComponentInParent<Crystal>().Break();
+
+            }
         }
 
         dashHits = Physics2D.RaycastAll(transform.position + new Vector3(0, 1, 0), dir, distanceOfSpecialDash);
@@ -455,10 +490,16 @@ public class PlayerController : MonoBehaviour
             {
                 rayh.collider.gameObject.GetComponentInParent<AnimalEnemy>().Kill();
             }
+
+            else if (rayh.collider.gameObject.CompareTag("Crystal"))
+            {
+                rayh.collider.gameObject.GetComponentInParent<Crystal>().Break();
+
+            }
         }
 
         specialDashing = false;
-        //mover el pj hasta el final del rayo o hasta la pared con la que choque
+        
 
         transform.Translate(finalPos - aux);
 
@@ -479,6 +520,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    //It checks which secondary attack you have equiped and starts the correspondent function
     private void Attack2(SecondaryATKs sA)
     {
         currentUsesSecondaryATK--;
@@ -510,6 +552,7 @@ public class PlayerController : MonoBehaviour
         else if (rigid.gravityScale != 3) rigid.gravityScale = 3;
     }
 
+    
     private void WallJump()
     {
         Vector2 aux = Vector2.zero;
@@ -610,7 +653,6 @@ public class PlayerController : MonoBehaviour
         if (wallLeft && jumpedRight)
         {
             horiz = -1;
-            //acc = 0.5f;
             jumpedRight = false;
             
             if (!spriteRenderer.flipX)
@@ -623,7 +665,6 @@ public class PlayerController : MonoBehaviour
             horiz = 1;
             jumpedLeft = false;
             
-            //acc = 0;
             if (spriteRenderer.flipX)
             {
                 FlipSprite(false);
@@ -631,10 +672,13 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    //Function that manages horizontal movement
     private void Movement()
     {
+
         Vector2 mov = new Vector2(0, rigid.velocity.y);
-        if (locked)
+
+        if (locked) 
         {
             horiz = 1;
             acc = 1;
@@ -644,11 +688,10 @@ public class PlayerController : MonoBehaviour
         }
         if (jumpedLeft || jumpedRight)
         {
-            //acc = 0;
             return;
         }
 
-
+        //depending on the key pressed it sets horiz to 1 or -1 (right or left), and it gradually increases the acceleration
         if (Input.GetKey(KeyCode.A))
         {
 
@@ -661,6 +704,7 @@ public class PlayerController : MonoBehaviour
             if (acc <= 1) acc += 0.03f;
 
         }
+
         else if (Input.GetKey(KeyCode.D))
         {
 
@@ -702,6 +746,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    //to go up and down a ladder it just moves the player through walls until it finds a ladderTop or ladderBottom
     private IEnumerator GoUpLadder()
     {
         climbing = true;
@@ -740,11 +785,14 @@ public class PlayerController : MonoBehaviour
         climbing = false;
     }
 
+    //standard attack 
     private IEnumerator Attack1()
     {
+        //sends the bool to the animator for the animation and plays the audio
         animator.SetBool("Attacked", true);
-
         audioManager.PlaySwordAttack();
+
+        //turns off gravity, pushes the player towards the direction of the attack, turns on all gameObjects relates to the attack and starts the animation of the slash
         float aux = acc;
         canAttack = false;
         attacking = true;
@@ -758,8 +806,10 @@ public class PlayerController : MonoBehaviour
         rigid.velocity = new Vector2(rigid.velocity.x / 2, rigid.velocity.y / 2);
         rigid.AddForce(dir * attackMove);
 
-
+        //waits for the duration of the attack
         yield return new WaitForSeconds(attackTime);
+
+        //turns all gameobjects back off and turns on gravity as well
         attackHitObject.transform.right = Vector2.right;
         attackColl.enabled = false;
         slashAnimator.SetBool("Attacked", false);
@@ -768,10 +818,13 @@ public class PlayerController : MonoBehaviour
         attacking = false;
         if (dir.x / horiz > 0) acc = aux;
         else acc = 0.3f * aux;
+
+        //starts cooldown
         uiManager.UsedNormalAttack(attackCD);
 
     }
 
+    //Instantiates a Projectile in front of the player
     private void IcicleShot()
     {
         Vector2 dir = Direction();
@@ -783,6 +836,7 @@ public class PlayerController : MonoBehaviour
         audioManager.PlayCastIcicleShot();
     }
 
+    //makes the character invulnerable for some time and stuns enemies that attack him
     private IEnumerator DefinitiveShield()
     {
         shielding = true;
@@ -797,6 +851,7 @@ public class PlayerController : MonoBehaviour
         uiManager.UsedSecondAttack(defShieldCD);
     }
 
+    //Instantiates a Projectile in front of the player
     private void Fireball()
     {
         Vector2 dir = Direction();
@@ -839,10 +894,6 @@ public class PlayerController : MonoBehaviour
         onWorkStation = ws;
     }
 
-    public void SetRoom(Room r)
-    {
-        currentRoom = r;
-    }
 
     public void SetLadder(Ladder l)
     {
@@ -878,6 +929,7 @@ public class PlayerController : MonoBehaviour
         ladderBottom = ladderTop = false;
     }
 
+    //when it gets hit, if it's attacking pushes back the enemy and itself, if it's shielding stuns the enemy, and if not doing any of the previous dies
     public void GotHit(AnimalEnemy aE)
     {
         if (attacking)
@@ -935,10 +987,6 @@ public class PlayerController : MonoBehaviour
         return attacking;
     }
 
-    public Room GetRoom()
-    {
-        return currentRoom;
-    }
 
     public bool IsClimbing()
     {

@@ -43,8 +43,6 @@ public class AnimalEnemy : MonoBehaviour
 
     [SerializeField] private float rangeOfAttack;
 
-
-    private Room currentRoom;
     private float directionToMove;
 
     [SerializeField] private float speed;
@@ -62,10 +60,10 @@ public class AnimalEnemy : MonoBehaviour
     [SerializeField] private float attackDelay = 0.75f;
     private float attackTime = 0.3f;
 
-    //variable para entrar solo una vez en el suspicious state
+    //Variable used to enter just once in suspicious state without entering any of the other states afterwards
     private bool notEnterAgain = false;
 
-    //LP = last position
+    //LP = last position, this variable is used for both the distance to the last position where the player was seen and the distance to the enemy's original position
     private float distanceToLP;
 
     private float stunnedTime;
@@ -90,7 +88,7 @@ public class AnimalEnemy : MonoBehaviour
 
     private Animator attackAnimator;
 
-    //Inicialización de variables relacionadas con los componentes del objeto
+    
 
     private void Awake()
     {
@@ -103,7 +101,7 @@ public class AnimalEnemy : MonoBehaviour
         else spriteRenderer.flipX = false;
     }
 
-    //Inicialización de variables relacionadas con otros objetos
+
     private void Start()
     {
         gameManager = FindObjectOfType<GameManager>();
@@ -118,15 +116,16 @@ public class AnimalEnemy : MonoBehaviour
 
     private void Update()
     {
-        //si no vuelan ni son a rango detectan al player de forma normal, en una dirección
+        //If the enemy is not a flying one nor a ranged one, they detect the player normally
+        //they use three rays towards one direction
 
         if (!flying && !ranged) Detect();
 
-        //si vuelan o son a rango detectan en un radio
+        //If they ARE a flying or a ranged enemy they detect in a radius
 
         else DetectRadius();
 
-        //si el enemigo está stun hay que hacer return, y lo mismo si ataca, para que no se mueva ni ataque durante un ataque
+        //If the enemy is stunned or is attacking we exit the update, it's necessary to use two ifs because if it's attacking we don't want to set the velocity to 0
         if (stunned)
         {
             rigid.velocity = Vector2.zero;
@@ -136,7 +135,7 @@ public class AnimalEnemy : MonoBehaviour
 
         detecting = null;
 
-        //girar el sprite si se da la vuelta el enemigo
+        //Flip the sprite if the enemy turns
         if (rigid.velocity.x > 0 && lookingRight)
         {
             lookingRight = false;
@@ -149,28 +148,27 @@ public class AnimalEnemy : MonoBehaviour
 
         }
 
-        //si tiene velocidad empezará la animación de correr (si tiene)
+        
         animator.SetFloat("Speed", Mathf.Abs(rigid.velocity.x) + Mathf.Abs(rigid.velocity.y));
 
 
         if (!dead)
         {
-            //Revisar en que estado se encuentra el enemigo, Tiene tres estados posible
+            //Check in which state is the enemy at the moment, there's three possible states
 
-            //Idle state: regresar a la posición original
+            //Idle state: Go back to original position
             if (idleState)
             {
                 IdleState();
                 return;
             }
 
-            //Chasing State: perseguir al player y atacar si puede
-            //NO SACAR DE UPDATE, usa mucho el return y sería dificil adaptar a una función
+            //Chasing State: Chase the player and attack if possible
             else if (chasingState)
             {
                 if (notEnterAgain) notEnterAgain = false;
 
-                //Comprobar si aún ve al player
+                //Check if it can still see the player
 
                 direction = player.transform.position - transform.position;
                 direction.Normalize();
@@ -184,7 +182,7 @@ public class AnimalEnemy : MonoBehaviour
                 if (!chasingState) return;
                 Debug.DrawRay(transform.position, new Vector2(rangeOfAttack, 0));
 
-                //si es un enemigo a rango ataca desde donde esté
+                //If it's a ranged enemy attacks the player without moving
                 if (ranged)
                 {
                     attacking = true;   
@@ -192,7 +190,7 @@ public class AnimalEnemy : MonoBehaviour
                     return;
                 }
 
-                //acercarse si no está lo suficientemente cerca
+                //If not close enough, the enemy gets closer
 
                 if (Physics2D.OverlapCircle(transform.position, rangeOfAttack, playerLayer) == null) 
                 {
@@ -208,7 +206,7 @@ public class AnimalEnemy : MonoBehaviour
                     }
                     
                 }
-                else //si está suficientemente cerca atacar
+                else //If close enough, attack
                 {
                     if(!flying) rigid.velocity = new Vector2(0, rigid.velocity.y);
                     else rigid.velocity = new Vector2(0,0);
@@ -222,8 +220,8 @@ public class AnimalEnemy : MonoBehaviour
             }
 
 
-            //Suspicious State: el enemigo busca al Player cuando lo pierde de vista
-            //solo se entra una vez porque empieza una corutina 
+            //Suspicious State: Enemy looks for player on the spot
+            //Enter here just once because it starts a coroutine
             else if (suspiciousState && !notEnterAgain)
             {
                 SuspiciousState();
@@ -235,7 +233,7 @@ public class AnimalEnemy : MonoBehaviour
 
     private void SuspiciousState()
     {
-        //Si es un enemigo a rango no ha de entrar en suspicious state
+        //If it's a ranged enemy it just returns to Idle state
         if (ranged)
         {
             suspiciousState = false;
@@ -243,10 +241,10 @@ public class AnimalEnemy : MonoBehaviour
             StartCoroutine(MovementRanged());
             return;
         }
-        if (lastPosition != null) //mirar si tenemos una última posición
+        if (lastPosition != null) //Check if we have a last position
         {
             distanceToLP = Mathf.Abs(lastPosition.x - transform.position.x);
-            if (distanceToLP < 1f) //mirar si está lo suficientemente cerca de esa posición
+            if (distanceToLP < 1f) //check if it got to the last position or not
             {
                 StartCoroutine(SearchInPlace());
                 notEnterAgain = true;
@@ -266,7 +264,7 @@ public class AnimalEnemy : MonoBehaviour
             return;
         }
         distanceToLP = Mathf.Abs(originalPos.x - transform.position.x);
-        if (distanceToLP > 1f) //mirar si está lejos de su posición inicial
+        if (distanceToLP > 1f) //Check if it's close to its original position
         {
             float dir = Mathf.Sign(originalPos.x - transform.position.x);
             rigid.velocity = new Vector2(speed * dir, rigid.velocity.y);
@@ -278,7 +276,7 @@ public class AnimalEnemy : MonoBehaviour
         if (notEnterAgain) notEnterAgain = false;
     }
    
-    //Funcion para que el enemigo vaya alternando entre buscar a la izquierda y a la derecha cuando está en suspicious state
+    //Function used so the enemy looks for the player on the spot
     private IEnumerator SearchInPlace()
     {
         rigid.velocity = new Vector2(0, rigid.velocity.y);
@@ -374,7 +372,7 @@ public class AnimalEnemy : MonoBehaviour
         attacking = false;
     }
 
-    //Funcion para calcular el origen de los raycasts de detección para los enemigos que no detectan con radio
+    //Function to check where the detection raycasts come from for the enemies that don't detect the player with a radius
     private void CalculateRaycastOrigin()
     {
         if (lookingRight && front != Vector3.right)
@@ -437,8 +435,7 @@ public class AnimalEnemy : MonoBehaviour
 
     }
 
-    //Comprueba si en el array que se ha hecho en el Chasing State se encuentra el player y si no hay una pared antes
-    //Resumen: si aún lo ve
+    //Check if the Enemy still can see the player, it checks all the Raycast array and stops when it detects a wall or the player
     private void ChasingCheck()
     {
         if (chasing.Length > 0)
@@ -473,12 +470,12 @@ public class AnimalEnemy : MonoBehaviour
         }
     }
 
-    //Manejo del Raycast para la detección del player
+    //Same as before but used for the detection, not for the chasing state
     private void DetectingCheck()
     {
         if (detecting.Length > 0)
         {
-            //mientras no encuentre una pared ni al player no sale sel bucle hasta revisar todo con lo que ha chocado el rayo
+
             for (int i = 0; i < detecting.Length && !wall; i++)
             {
                 if (detecting[i].collider != null && detecting[i].collider.gameObject.CompareTag("Wall"))
@@ -541,17 +538,8 @@ public class AnimalEnemy : MonoBehaviour
         }
     }
 
-    public void UpdateRoom(Room r)
-    {
-        if (r != currentRoom)
-        {
-            currentRoom = r;
-        }
-    }
-
-    //Funcion que comprueba si una explosión o un ataque le da realmente al objetivo
-    //El collider de una explosión puede atravesar una pared, pero en ese caso el enemigo no ha de morir
-    //Esta funcion sirve para saber si la explosión acierta realmente al enemigo o hay una pared en medio
+    //Funtion made to check if an attack or an explosion actually hits the enemy
+    //attacks and explosions hitboxes are large and can get through walls, this checks if there is a wall between the explosion/attack and the enemy
     private bool ItHits(Collider2D collision)
     {
         Vector2 aux1 = coll.ClosestPoint(collision.gameObject.transform.position);
@@ -562,7 +550,7 @@ public class AnimalEnemy : MonoBehaviour
         return attackHits.collider == null;
     }
 
-    //Funcion para que los enemigos a rango hagan un pequeño movimiento bailarín
+    //Funtion to make ranged enemies dance a little
     private IEnumerator MovementRanged()
     {
         while (!dead && idleState)

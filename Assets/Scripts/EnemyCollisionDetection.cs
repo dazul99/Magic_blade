@@ -19,7 +19,6 @@ public class EnemyCollisionDetection : MonoBehaviour
         else if (collision.gameObject.CompareTag("Attack")) parent.GotHit(collision);
         else if (collision.gameObject.CompareTag("Explosion")) parent.Exploded(collision);
         else if (collision.gameObject.CompareTag("Shot")) parent.GotShot();
-        else if (collision.gameObject.CompareTag("Room")) parent.UpdateRoom(collision.gameObject.GetComponent<Room>());
     }
 
 

@@ -1429,6 +1429,10 @@ PrefabInstance:
       propertyPath: lookingRight
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5522077006746736173, guid: 0e11cf16d6bc51f489d92ce58b92342e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5698421611763749123, guid: 0e11cf16d6bc51f489d92ce58b92342e, type: 3}
       propertyPath: m_Name
       value: Easy_enemy (2)
@@ -20386,11 +20390,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1602727909237236305, guid: efad3f6253971c945be078cb55f9fee0, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -44.018173
+      value: -46.29
       objectReference: {fileID: 0}
     - target: {fileID: 1602727909237236305, guid: efad3f6253971c945be078cb55f9fee0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.416172
+      value: 1.01
       objectReference: {fileID: 0}
     - target: {fileID: 1602727909237236305, guid: efad3f6253971c945be078cb55f9fee0, type: 3}
       propertyPath: m_LocalPosition.z
